@@ -3,6 +3,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 import { Menu, X } from "lucide-react"; // Import icons for the menu
+import Link from "next/link";
 
 export default function Nav() {
   const { user, loginWithGoogle, logout } = useAuth();
@@ -60,10 +61,16 @@ export default function Nav() {
           }`}
         >
           <ul className="flex flex-col space-y-2 text-4xl text-left pl-4 pt-4">
-            <li className="hover:text-gray-300 cursor-pointer">Home</li>
+            <Link href="/">
+              <li className="hover:text-gray-300 cursor-pointer">Home</li>
+            </Link>
             <li className="hover:text-gray-300 cursor-pointer">Dashboard</li>
             <li className="hover:text-gray-300 cursor-pointer">Daily Log</li>
-            <li className="hover:text-gray-300 cursor-pointer">Preferences</li>
+            <Link href="/preferences">
+              <li className="hover:text-gray-300 cursor-pointer">
+                Preferences
+              </li>
+            </Link>
           </ul>
 
           <UserMenu user={user} logout={logout} mobile />
