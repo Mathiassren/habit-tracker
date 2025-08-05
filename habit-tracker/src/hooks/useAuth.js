@@ -1,4 +1,4 @@
-"use client"; // This ensures it runs on the client
+"use client";
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/services/supabase";
@@ -9,8 +9,31 @@ export function useAuth() {
 
   useEffect(() => {
     const checkUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      setUser(data?.user || null);
+      const {
+        data: { user: authUser },
+      } = await supabase.auth.getUser();
+
+      if (authUser) {
+        // ✅ Fetch additional profile data
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("full_name, avatar_url")
+          .eq("id", authUser.id)
+          .single();
+
+        if (profile) {
+          // Merge profile data into user object
+          authUser.user_metadata.full_name = profile.full_name;
+          authUser.user_metadata.avatar_url = profile.avatar_url;
+        } else if (profileError) {
+          console.error("Profile fetch error:", profileError.message);
+        }
+
+        setUser(authUser);
+      } else {
+        setUser(null);
+      }
+
       setLoading(false);
     };
 
@@ -18,7 +41,11 @@ export function useAuth() {
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (_, session) => {
-        setUser(session?.user || null);
+        if (session?.user) {
+          setUser(session.user);
+        } else {
+          setUser(null);
+        }
       }
     );
 
@@ -37,5 +64,5 @@ export function useAuth() {
     setUser(null);
   };
 
-  return { user, loading, loginWithGoogle, logout };
+  return { user, setUser, loading, loginWithGoogle, logout };
 }

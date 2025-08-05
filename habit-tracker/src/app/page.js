@@ -38,9 +38,9 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="relative min-h-screen flex flex-col justify-start items-start bg-gray-900 text-white p-8">
+    <div className="min-h-screen flex flex-col justify-start items-start bg-gray-900 text-white p-8">
       {/* Main Content */}
-      <main className="z-10 mt-10">
+      <main className="z-10">
         <h1 className="text-4xl md:text-4xl font-bold text-white">
           Happily track your habits daily with Habify
         </h1>
@@ -61,7 +61,7 @@ export default function Home() {
       </main>
 
       {/* Animated Grid Positioned at Bottom-Right */}
-      <div className="absolute bottom-20 right-0 p-4">
+      <div className="mt-20">
         <div ref={gridRef} className="staggering-grid grid grid-cols-12 gap-2">
           {Array.from({ length: 36 }).map((_, index) => (
             <div

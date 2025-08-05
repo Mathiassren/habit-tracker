@@ -4,6 +4,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 import { Menu, X } from "lucide-react"; // Import icons for the menu
 import Link from "next/link";
+import Image from "next/image";
+
+<Image src="/Habify.png" alt="Habify Logo" width={100} height={100} />;
 
 export default function Nav() {
   const { user, loginWithGoogle, logout } = useAuth();
@@ -15,7 +18,17 @@ export default function Nav() {
     <nav className="bg-gray-900 text-white p-4">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
         {/* Logo */}
-        <div className="text-xl font-bold text-blue-500">Habify</div>
+        <Link href="/">
+          <div className="flex items-center ">
+            <Image
+              src="/habitDots.png"
+              alt="Habify Logo"
+              width={50}
+              height={50}
+            />
+            <p>Habify</p>
+          </div>
+        </Link>
 
         {/* If user is logged in, show the burger menu. Otherwise, show Login button */}
         {user ? (
@@ -26,12 +39,12 @@ export default function Nav() {
           >
             {isOpen ? (
               <X
-                size={28}
+                size={20}
                 className="transition-transform duration-300 rotate-90"
               />
             ) : (
               <Menu
-                size={28}
+                size={20}
                 className="transition-transform duration-300 rotate-0"
               />
             )}
@@ -65,7 +78,9 @@ export default function Nav() {
               <li className="hover:text-gray-300 cursor-pointer">Home</li>
             </Link>
             <li className="hover:text-gray-300 cursor-pointer">Dashboard</li>
-            <li className="hover:text-gray-300 cursor-pointer">Daily Log</li>
+            <Link href="/dailylog">
+              <li className="hover:text-gray-300 cursor-pointer">Daily Log</li>
+            </Link>
             <Link href="/preferences">
               <li className="hover:text-gray-300 cursor-pointer">
                 Preferences
@@ -90,7 +105,7 @@ function UserMenu({ user, logout, mobile = false }) {
     >
       <div className="flex mt-6 items-center gap-4">
         <img
-          src={user.user_metadata?.avatar_url || "/default-avatar.png"} // Prevent null error
+          src={user.user_metadata?.avatar_url || null} // Prevent null error
           alt="User Avatar"
           className="w-10 h-10 rounded-xl"
         />
