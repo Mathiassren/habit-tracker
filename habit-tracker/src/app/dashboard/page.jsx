@@ -1,27 +1,70 @@
-import Head from "next/head";
+"use client"; // Forces client-side execution
 
-export default function Home() {
+import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import Link from "next/link";
+import {
+  HomeIcon,
+  ChartBarIcon,
+  DocumentChartBarIcon,
+  AdjustmentsHorizontalIcon,
+} from "@heroicons/react/24/outline";
+
+export default function Dashboard() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/");
+    }
+  }, [user, loading]);
+
+  if (loading) return;
+  if (!user) return null;
+
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <Head>
-        <title>Habit Tracker</title>
-        <meta name="description" content="Track your habits and analytics" />
-      </Head>
+    <div className="p-8">
+      <div className="flex items-center justify-center">
+        <img
+          src={user.user_metadata?.avatar_url || null} // Prevent null error
+          alt="User Avatar"
+          className="w-20 h-20 mb-10 rounded-full"
+        />
+      </div>
+      <h2 className="text-2xl font-bold">
+        Welcome, {user.user_metadata.full_name}!
+      </h2>
 
-      <main className="text-center p-8">
-        <h1 className="text-5xl font-bold text-blue-600">
-          Welcome to Habit Tracker
-        </h1>
-        <p className="mt-4 text-xl text-gray-700">
-          Keep track of your habits and improve your daily routine.
-        </p>
-
-        <div className="mt-6">
-          <button className="bg-blue-600 text-white py-2 px-6 rounded-lg shadow-lg hover:bg-blue-700">
-            Get Started
-          </button>
-        </div>
-      </main>
+      <img src="" alt="" />
+      <p className="mt-2">Email: {user.email}</p>
+      <section className="grid grid-cols-2 gap-4 mt-4">
+        <Link href="/">
+          <div className="bg-gray-800 w-36 h-36 rounded-lg items-center flex flex-col justify-center">
+            <HomeIcon className="w-10 h-10 mb-1 text-gray-400" />
+            Home
+          </div>
+        </Link>
+        <Link href="/dashboard">
+          <div className="bg-gray-800 w-36 h-36 rounded-lg items-center flex flex-col justify-center">
+            <ChartBarIcon className="w-10 h-10 mb-1 text-gray-400" />
+            Dashboard
+          </div>
+        </Link>
+        <Link href="/dailylog">
+          <div className="bg-gray-800 w-36 h-36 rounded-lg items-center flex flex-col justify-center">
+            <DocumentChartBarIcon className="w-10 h-10 mb-1 text-gray-400" />
+            Daily Log
+          </div>
+        </Link>
+        <Link href="/preferences">
+          <div className="bg-gray-800 w-36 h-36 rounded-lg items-center flex flex-col justify-center">
+            <AdjustmentsHorizontalIcon className="w-10 h-10 mb-1 text-gray-400" />
+            Preferences
+          </div>
+        </Link>
+      </section>
     </div>
   );
 }
