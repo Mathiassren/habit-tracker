@@ -6,6 +6,15 @@ import Nav from "@/app/components/nav"; // Import Navbar
 import BottomNav from "@/app/components/bottomNav";
 import "@mantine/dates/styles.css";
 
+import Head from "next/head";
+
+<Head>
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#9333ea" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
+</Head>;
+
 const geistSans = Geist({
   subsets: ["latin"],
   variable: "--font-geist-sans",

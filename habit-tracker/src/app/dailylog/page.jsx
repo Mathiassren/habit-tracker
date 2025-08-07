@@ -11,7 +11,9 @@ import {
   CalendarIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  EnvelopeIcon,
 } from "@heroicons/react/24/outline";
+import { EnvelopeOpenIcon } from "@radix-ui/react-icons";
 
 // ✅ Hook for animated numbers
 function useCountUp(targetValue, duration = 500) {
@@ -35,6 +37,11 @@ export default function HabitTracker() {
   const [habitProgress, setHabitProgress] = useState({});
   const [habitStatuses, setHabitStatuses] = useState({});
   const [selectedDate, setSelectedDate] = useState(dayjs());
+
+  //add notes
+  const [selectedHabit, setSelectedHabit] = useState(null);
+  const [noteInput, setNoteInput] = useState("");
+  const [showNoteModal, setShowNoteModal] = useState(false);
 
   // Modal states
   const [showHabitModal, setShowHabitModal] = useState(false);
@@ -182,6 +189,25 @@ export default function HabitTracker() {
     fetchHabitStatuses();
   };
 
+  //Update habit note
+  const updateHabitNote = async (habitId, note) => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+
+    await supabase
+      .from("habits")
+      .update({ note })
+      .eq("user_id", user.id)
+      .eq("id", habitId);
+
+    // Update state
+    setHabits((prev) =>
+      prev.map((h) => (h.id === habitId ? { ...h, note } : h))
+    );
+  };
+
   // Delete habit
   const confirmDeleteHabit = async () => {
     await supabase.from("habits").delete().eq("id", habitToDelete);
@@ -297,7 +323,17 @@ export default function HabitTracker() {
               style={{ borderLeftColor: habit.color || "#9333EA" }}
             >
               <Bars2Icon className="h-5 w-5 text-gray-500 cursor-pointer" />
-              <p className="flex-1 text-center">{habit.name}</p>
+              <p
+                className="flex-1 text-center flex justify-center items-center cursor-pointer"
+                onClick={() => {
+                  setSelectedHabit(habit);
+                  setNoteInput(habit.note || "");
+                  setShowNoteModal(true);
+                }}
+              >
+                <EnvelopeIcon className="mr-4 w-4 h-4" /> {habit.name}
+              </p>
+
               <div className="flex items-center gap-4">
                 <InformationCircleIcon className="h-5 w-5 text-gray-400 cursor-pointer" />
                 <input
@@ -396,6 +432,57 @@ export default function HabitTracker() {
                 className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded text-white"
               >
                 Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showNoteModal && selectedHabit && (
+        <div className="fixed inset-0 bg-black p-4 bg-opacity-60 flex items-center justify-center z-50">
+          <div className="bg-gray-900 p-6 rounded-lg shadow-lg w-96 text-white">
+            <h4 className="text-lg font-semibold mb-4">
+              Habit: {selectedHabit.name}
+            </h4>
+
+            <textarea
+              className="w-full h-32 p-2 bg-gray-800 text-white rounded border border-gray-700"
+              placeholder="Write a note for this habit..."
+              value={noteInput}
+              onChange={(e) => setNoteInput(e.target.value)}
+            />
+
+            <div className="flex justify-end mt-4 gap-2">
+              <button
+                className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded"
+                onClick={() => setShowNoteModal(false)}
+              >
+                Close
+              </button>
+              <button
+                className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded"
+                onClick={async () => {
+                  const {
+                    data: { user },
+                  } = await supabase.auth.getUser();
+                  if (!user) return;
+
+                  await supabase
+                    .from("habits")
+                    .update({ note: noteInput })
+                    .eq("user_id", user.id)
+                    .eq("id", selectedHabit.id);
+
+                  // Update habit state
+                  setHabits((prev) =>
+                    prev.map((h) =>
+                      h.id === selectedHabit.id ? { ...h, note: noteInput } : h
+                    )
+                  );
+
+                  setShowNoteModal(false);
+                }}
+              >
+                Save Note
               </button>
             </div>
           </div>
