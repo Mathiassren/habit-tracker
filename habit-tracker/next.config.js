@@ -7,3 +7,5 @@ const withPWA = require("next-pwa")({
 module.exports = withPWA({
   reactStrictMode: true,
 });
+// This configuration enables PWA support in the Next.js application
+// and sets the public directory for service worker files.
