@@ -37,15 +37,6 @@ export default function HeatmapPage() {
 
       <HabitHeatmap byDate={byDate} />
 
-      <div className="text-sm text-gray-300">
-        {total} completion{total === 1 ? "" : "s"} in {year}
-      </div>
-
-      <section className="rounded-2xl bg-gray-900/70 border border-gray-800 p-6 space-y-4">
-        <h3 className="font-play font-bold text-lg">Quick complete</h3>
-        <HabitQuickComplete onCompleted={refreshHeatmap} />
-      </section>
-
       <section className="rounded-2xl bg-gray-900/70 border border-gray-800 p-6">
         <h3 className="font-play font-bold text-lg mb-3">
           Habit Stats{" "}

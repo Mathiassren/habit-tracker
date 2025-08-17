@@ -75,7 +75,9 @@ export default function Nav() {
             <Link href="/dashboard ">
               <li className="hover:text-gray-300 cursor-pointer">Home</li>
             </Link>
-            <li className="hover:text-gray-300 cursor-pointer">Dashboard</li>
+            <Link href="/heatmap">
+              <li className="hover:text-gray-300 cursor-pointer">Dashboard</li>
+            </Link>
             <Link href="/dailylog">
               <li className="hover:text-gray-300 cursor-pointer">Daily Log</li>
             </Link>
