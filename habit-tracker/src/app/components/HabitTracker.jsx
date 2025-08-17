@@ -194,7 +194,7 @@ export default function HabitTracker() {
   const animatedCompletedCount = useCountUp(completedCount, 500);
 
   return (
-    <div className="bg-[#111] text-white p-6 rounded-lg max-w-xl mx-auto relative">
+    <div className=" text-white p-6 rounded-lg max-w-xl mx-auto relative">
       {/* Date Picker with Dots */}
       <div className="flex items-center w-42 gap-3 mb-6">
         <button

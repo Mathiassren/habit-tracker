@@ -8,20 +8,13 @@ import ManageTab from "@/app/components/ManageTab";
 import PreferencesTab from "@/app/components/PreferencesTab";
 import TabNavigation from "@/app/components/TabNavigation";
 import LogoutButton from "@/app/components/LogoutButton";
+import { Mosaic } from "react-loading-indicators";
+import BottomNav from "@/app/components/bottomNav";
 
 export default function Dashboard() {
   const { user, setUser, loading, logout } = useAuth();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState("app");
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push("/");
-    }
-  }, [user, loading]);
-
-  if (loading) return <p>Loading...</p>;
-  if (!user) return null;
+  const [activeTab, setActiveTab] = useState("preferences");
 
   const createdAt = new Date(user?.created_at).toLocaleDateString("da-DK", {
     year: "numeric",

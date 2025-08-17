@@ -37,7 +37,7 @@ export default function Dashboard() {
         Welcome, {user.user_metadata.full_name}!
       </h2>
 
-      <img src="" alt="" />
+      <img alt="" />
       <p className="mt-2">Email: {user.email}</p>
       <section className="grid grid-cols-2 gap-4 mt-4">
         <Link href="/">

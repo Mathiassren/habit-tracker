@@ -6,8 +6,6 @@ import { Menu, X } from "lucide-react"; // Import icons for the menu
 import Link from "next/link";
 import Image from "next/image";
 
-<Image src="/Habify.png" alt="Habify Logo" width={100} height={100} />;
-
 export default function Nav() {
   const { user, loginWithGoogle, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false); // State for menu visibility
@@ -74,7 +72,7 @@ export default function Nav() {
           }`}
         >
           <ul className="flex flex-col space-y-2 text-4xl text-left pl-4 pt-4">
-            <Link href="/">
+            <Link href="/dashboard ">
               <li className="hover:text-gray-300 cursor-pointer">Home</li>
             </Link>
             <li className="hover:text-gray-300 cursor-pointer">Dashboard</li>
@@ -105,7 +103,7 @@ function UserMenu({ user, logout, mobile = false }) {
     >
       <div className="flex mt-6 items-center gap-4">
         <img
-          src={user.user_metadata?.avatar_url || null} // Prevent null error
+          src={user.user_metadata?.avatar_url || ""} // Prevent null error
           alt="User Avatar"
           className="w-10 h-10 rounded-xl"
         />
@@ -113,6 +111,7 @@ function UserMenu({ user, logout, mobile = false }) {
           {user.user_metadata?.full_name || "Guest"}
         </span>
         <button
+          type="button"
           onClick={logout}
           className="border-2 border-solid rounded-xl px-6 p-2 transition hover:bg-gray-800"
         >

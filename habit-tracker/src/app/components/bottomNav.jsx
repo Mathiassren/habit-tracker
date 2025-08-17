@@ -1,29 +1,26 @@
 "use client";
 
-import { useAuth } from "@/hooks/useAuth"; // ✅ Import Authentication Hook
-import { usePathname } from "next/navigation"; // Get current route
+import { useAuth } from "@/hooks/useAuth";
+import { usePathname } from "next/navigation";
 import { LayoutDashboard, Home, Settings } from "lucide-react";
 import Link from "next/link";
 
 export default function BottomNav() {
-  const { user, loading } = useAuth(); // ✅ Check if user is authenticated
-  const pathname = usePathname(); // Get the current route
+  const { loading } = useAuth(); // We don't hide nav based on user anymore
+  const pathname = usePathname();
 
-  // ✅ Hide the nav if the user is not logged in or still loading
-  if (loading || !user) return null;
-
+  // While loading, still show nav so it doesn’t flicker
   return (
     <nav className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 border border-indigo-800 p-2 shadow-lg rounded-2xl bg-gray-900">
       <ul className="flex justify-around text-white">
         <NavItem href="/dashboard" pathname={pathname} icon={LayoutDashboard} />
-        <NavItem href="/" pathname={pathname} icon={Home} />
+        <NavItem href="/dashboard" pathname={pathname} icon={Home} />
         <NavItem href="/preferences" pathname={pathname} icon={Settings} />
       </ul>
     </nav>
   );
 }
 
-// ✅ Reusable NavItem Component for easier styling
 const NavItem = ({ href, pathname, icon: Icon }) => {
   const isActive = pathname === href;
 

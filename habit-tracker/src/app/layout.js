@@ -3,7 +3,6 @@ import { MantineProvider } from "@mantine/core";
 import "@mantine/core/styles.css";
 import "./globals.css";
 import Nav from "@/app/components/nav";
-import BottomNav from "@/app/components/bottomNav";
 import "@mantine/dates/styles.css";
 import Head from "next/head";
 
