@@ -101,6 +101,7 @@ export default function HabitHeatmap({
             "Nov",
             "Dec",
           ],
+
           totalCount: `${total} completions in {{year}}`,
           weekDays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
         }}

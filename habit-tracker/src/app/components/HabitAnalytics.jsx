@@ -146,15 +146,17 @@ function MiniMonth({ month, highlighted = new Set(), onChangeMonth }) {
             key={c.iso}
             className={`relative h-9 rounded-md text-sm ${
               c.inMonth ? "text-gray-200" : "text-gray-600"
-            }`}
+            } flex items-center justify-center`} // center contents
           >
-            {c.day}
-            {c.hit && (
-              <span
-                className="absolute left-1/2 -translate-x-1/2 bottom-1 w-2 h-2 rounded-full"
-                style={{ backgroundColor: "#ff9db0" }}
-              />
-            )}
+            <div className="relative inline-flex flex-col items-center leading-none">
+              <span className="leading-none">{c.day}</span>
+              {c.hit && (
+                <span
+                  className="absolute -bottom-3 left-2.5 -translate-x-1/2 w-2 h-2 rounded-full"
+                  style={{ backgroundColor: "#9333EA" }}
+                />
+              )}
+            </div>
           </div>
         ))}
       </div>
@@ -351,7 +353,7 @@ export default function HabitAnalytics() {
           <div className="flex items-center gap-2">
             <span
               className="inline-block w-3 h-3 rounded-sm"
-              style={{ backgroundColor: "#ff9db0" }}
+              style={{ backgroundColor: "#C084FC" }}
             />
             <h2 className="font-play text-3xl font-extrabold tracking-wide">
               Analytics
@@ -416,7 +418,7 @@ export default function HabitAnalytics() {
                   cx="27"
                   cy="27"
                   r={donutMonth.r}
-                  stroke="#222"
+                  stroke="#A855F7"
                   strokeWidth="6"
                   fill="none"
                 />
@@ -424,7 +426,7 @@ export default function HabitAnalytics() {
                   cx="27"
                   cy="27"
                   r={donutMonth.r}
-                  stroke="#ff8aa1"
+                  stroke="#7E22CE"
                   strokeWidth="6"
                   strokeDasharray={`${donutMonth.dash} ${donutMonth.c}`}
                   strokeLinecap="round"
@@ -500,7 +502,7 @@ export default function HabitAnalytics() {
                   cx="27"
                   cy="27"
                   r={donutOverall.r}
-                  stroke="#222"
+                  stroke="#A855F7"
                   strokeWidth="6"
                   fill="none"
                 />
@@ -508,7 +510,7 @@ export default function HabitAnalytics() {
                   cx="27"
                   cy="27"
                   r={donutOverall.r}
-                  stroke="#ff8aa1"
+                  stroke="#7E22CE "
                   strokeWidth="6"
                   strokeDasharray={`${donutOverall.dash} ${donutOverall.c}`}
                   strokeLinecap="round"
