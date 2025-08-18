@@ -46,7 +46,7 @@ export default function Dashboard() {
             Home
           </div>
         </Link>
-        <Link href="/dashboard">
+        <Link href="/heatmap">
           <div className="bg-gray-800 w-36 h-36 rounded-lg items-center flex flex-col justify-center">
             <ChartBarIcon className="w-10 h-10 mb-1 text-gray-400" />
             Dashboard

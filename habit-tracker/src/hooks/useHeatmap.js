@@ -2,49 +2,83 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/services/supabase";
 
+const isISO = (s) => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
+const toLocalDay = (ts, tz = "UTC") =>
+  new Date(ts).toLocaleDateString("en-CA", {
+    timeZone: tz || "UTC",
+  });
+
 export function useHeatmap(
   userId,
-  sinceDate,
-  untilDate,
+  sinceISO,
+  untilISO,
   tz = "UTC",
   refreshKey = 0
 ) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
-  const since = sinceDate;
-  const until = untilDate;
 
   async function fetchHeatmap() {
-    if (!userId || !since || !until) {
+    if (!userId || !isISO(sinceISO) || !isISO(untilISO)) {
       setRows([]);
       setLoading(false);
       return;
     }
     setLoading(true);
-    const { data, error } = await supabase.rpc("get_heatmap", {
-      _uid: userId,
-      _since: since,
-      _until: until,
-      _tz: tz,
-    });
-    if (error) {
-      console.error("heatmap rpc error:", error.message);
+
+    try {
+      // Preferred: completed_on exists
+      let { data, error } = await supabase
+        .from("habit_completions")
+        .select("completed_on, completed_at")
+        .eq("user_id", userId)
+        .gte("completed_on", sinceISO)
+        .lte("completed_on", untilISO);
+
+      if (error || !Array.isArray(data)) {
+        // Fallback: use completed_at and derive day
+        const start = new Date(`${sinceISO}T00:00:00`).toISOString();
+        const end = new Date(`${untilISO}T23:59:59.999`).toISOString();
+        const res2 = await supabase
+          .from("habit_completions")
+          .select("completed_at")
+          .eq("user_id", userId)
+          .gte("completed_at", start)
+          .lte("completed_at", end);
+        if (res2.error) {
+          console.error("useHeatmap fetch error:", res2.error);
+          setRows([]);
+        } else {
+          const counts = {};
+          for (const r of res2.data || []) {
+            const day = toLocalDay(r.completed_at, tz);
+            counts[day] = (counts[day] || 0) + 1;
+          }
+          setRows(Object.entries(counts).map(([day, cnt]) => ({ day, cnt })));
+        }
+      } else {
+        const counts = {};
+        for (const r of data || []) {
+          const day = r.completed_on || toLocalDay(r.completed_at, tz);
+          counts[day] = (counts[day] || 0) + 1;
+        }
+        setRows(Object.entries(counts).map(([day, cnt]) => ({ day, cnt })));
+      }
+    } catch (e) {
+      console.error("useHeatmap fetch exception:", e);
       setRows([]);
-    } else {
-      setRows(data || []);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   useEffect(() => {
     fetchHeatmap();
-  }, [userId, since, until, tz, refreshKey]);
 
-  // (Optional) realtime refetch
-  useEffect(() => {
+    // Realtime: update when completions change for this user
     if (!userId) return;
     const ch = supabase
-      .channel("completions_rt")
+      .channel("heatmap-realtime")
       .on(
         "postgres_changes",
         {
@@ -56,10 +90,12 @@ export function useHeatmap(
         fetchHeatmap
       )
       .subscribe();
+
     return () => {
       supabase.removeChannel(ch);
     };
-  }, [userId, since, until, tz]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, sinceISO, untilISO, tz, refreshKey]);
 
   const byDate = useMemo(() => {
     const m = {};

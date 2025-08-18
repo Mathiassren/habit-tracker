@@ -1,22 +1,36 @@
 "use client";
+
 import { useState, useEffect, useMemo, useCallback } from "react";
 import dayjs from "dayjs";
 import { DatePickerInput } from "@mantine/dates";
 import { supabase } from "@/services/supabase";
 import {
   PlusIcon,
-  InformationCircleIcon,
-  Bars2Icon,
-  TrashIcon,
   CalendarIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  EnvelopeIcon,
 } from "@heroicons/react/24/outline";
 
-/**
- * Utils & hooks
- */
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  TouchSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  verticalListSortingStrategy,
+  sortableKeyboardCoordinates,
+} from "@dnd-kit/sortable";
+
+import SortableHabitItem from "@/app/components/SortableHabitItem";
+
+/* --------------------------- Utilities & helpers -------------------------- */
+
 function useCountUp(targetValue, duration = 500) {
   const [value, setValue] = useState(0);
   useEffect(() => {
@@ -35,37 +49,20 @@ function useCountUp(targetValue, duration = 500) {
   return Math.round(value);
 }
 
-function buildStatusMap(habitsData = [], progressData = []) {
-  const completed = new Set(
-    progressData
-      .filter((p) => p.completed)
-      .map((p) => `${p.date}:${p.habit_id}`)
-  );
-  const byDate = new Map(); // date -> { total, done }
-  for (const h of habitsData) {
-    const bucket = byDate.get(h.date) || { total: 0, done: 0 };
-    bucket.total += 1;
-    if (completed.has(`${h.date}:${h.id}`)) bucket.done += 1;
-    byDate.set(h.date, bucket);
-  }
-  const statusMap = {};
-  for (const [date, { total, done }] of byDate) {
-    const ratio = total ? done / total : 0;
-    statusMap[date] = ratio === 1 ? "green" : ratio >= 0.5 ? "orange" : "red";
-  }
-  return statusMap;
-}
-
 async function getUser() {
   const {
     data: { user },
+    error,
   } = await supabase.auth.getUser();
+  if (error) throw error;
   return user;
 }
 
-/**
- * Small, focused UI components
- */
+const toLocalISO = (ts) =>
+  new Date(ts ?? Date.now()).toLocaleDateString("en-CA"); // YYYY-MM-DD
+
+/* ------------------------------ Small UI bits ----------------------------- */
+/** Date picker with restored dot indicator via renderDay */
 function DateNavigator({ selectedDate, onChange, dotForDate }) {
   const go = (delta) => onChange(selectedDate.add(delta, "day"));
   return (
@@ -80,14 +77,14 @@ function DateNavigator({ selectedDate, onChange, dotForDate }) {
         leftSection={<CalendarIcon className="w-5 h-5 text-gray-400" />}
         renderDay={(date) => {
           const dateStr = dayjs(date).format("YYYY-MM-DD");
-          const color = dotForDate(dateStr);
+          const color = dotForDate?.(dateStr);
           return (
             <div className="relative flex items-center justify-center">
               <span>{date.getDate()}</span>
               {color && (
                 <span
-                  className="absolute w-1.5 mt-4 h-1.5 rounded-full"
-                  style={{ backgroundColor: color }}
+                  className="absolute w-1.5 h-1.5 rounded-full"
+                  style={{ backgroundColor: color, marginTop: "16px" }}
                 />
               )}
             </div>
@@ -135,36 +132,7 @@ function ProgressSummary({ completed, total }) {
   );
 }
 
-function HabitItem({ habit, checked, onToggle, onDelete, onOpenNote }) {
-  return (
-    <div
-      className="flex items-center justify-between bg-gray-900 rounded-lg p-3 border-l-4"
-      style={{ borderLeftColor: habit.color || "#9333EA" }}
-    >
-      <Bars2Icon className="h-5 w-5 text-gray-500" />
-      <button
-        type="button"
-        className="flex-1 text-center flex justify-center items-center cursor-pointer"
-        onClick={() => onOpenNote(habit)}
-      >
-        <EnvelopeIcon className="mr-4 w-4 h-4" /> {habit.name}
-      </button>
-      <div className="flex items-center gap-4">
-        <InformationCircleIcon className="h-5 w-5 text-gray-400" />
-        <input
-          type="checkbox"
-          checked={!!checked}
-          onChange={() => onToggle(habit.id)}
-          className="w-5 h-5 accent-purple-600 cursor-pointer"
-        />
-        <TrashIcon
-          className="h-5 w-5 text-red-500 cursor-pointer"
-          onClick={() => onDelete(habit.id)}
-        />
-      </div>
-    </div>
-  );
-}
+/* ------------------------------- Modals ---------------------------------- */
 
 function ColorSwatchGroup({ value, onChange }) {
   const colors = ["purple", "blue", "yellow", "green", "red", "orange", "pink"];
@@ -188,7 +156,6 @@ function ColorSwatchGroup({ value, onChange }) {
 function AddHabitModal({ open, onClose, onAdd }) {
   const [name, setName] = useState("");
   const [color, setColor] = useState("purple");
-
   if (!open) return null;
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
@@ -200,7 +167,7 @@ function AddHabitModal({ open, onClose, onAdd }) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Give your habit a name"
-          className="w-full px-3 py-2 mb-4 rounded bg-gray-800 text-white"
+          className="w-full px-3 py-2 mb-4 rounded bg-gray-800 text-white border border-gray-700 focus:border-purple-500 outline-none"
         />
         <p className="text-sm text-gray-400 mb-2">Choose a color:</p>
         <ColorSwatchGroup value={color} onChange={setColor} />
@@ -268,7 +235,7 @@ function NoteModal({ open, habit, note, onChange, onClose, onSave }) {
       <div className="bg-gray-900 p-6 rounded-lg shadow-lg w-96 text-white">
         <h4 className="text-lg font-semibold mb-4">Habit: {habit.name}</h4>
         <textarea
-          className="w-full h-32 p-2 bg-gray-800 text-white rounded border border-gray-700"
+          className="w-full h-32 p-2 bg-gray-800 text-white rounded border border-gray-700 focus:border-purple-500 outline-none"
           placeholder="Write a note for this habit..."
           value={note}
           onChange={(e) => onChange(e.target.value)}
@@ -292,21 +259,18 @@ function NoteModal({ open, habit, note, onChange, onClose, onSave }) {
   );
 }
 
-/**
- * Main container: orchestrates data + uses small components
- */
-export default function HabitTracker() {
+/* --------------------------------- Main ---------------------------------- */
+
+export default function DailylogPage() {
   const [selectedDate, setSelectedDate] = useState(dayjs());
   const [habits, setHabits] = useState([]);
-  const [progressMap, setProgressMap] = useState({}); // habit_id -> boolean
-  const [statusByDate, setStatusByDate] = useState({}); // YYYY-MM-DD -> color
+  const [progressMap, setProgressMap] = useState({});
+  const [statusByDate, setStatusByDate] = useState({});
 
-  // note state
   const [selectedHabit, setSelectedHabit] = useState(null);
   const [noteInput, setNoteInput] = useState("");
   const [showNoteModal, setShowNoteModal] = useState(false);
 
-  // modals
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [habitToDelete, setHabitToDelete] = useState(null);
@@ -316,27 +280,59 @@ export default function HabitTracker() {
     [selectedDate]
   );
 
+  // DnD sensors (renamed to avoid redeclare)
+  const dragSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 120, tolerance: 6 },
+    }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  /* ------------------------------ Data loaders ----------------------------- */
+
   const fetchHabits = useCallback(async () => {
     const user = await getUser();
     if (!user) return;
-    const { data } = await supabase
+
+    const { data, error } = await supabase
       .from("habits")
       .select("*")
       .eq("user_id", user.id)
-      .eq("date", dateStr);
+      .eq("date", dateStr)
+      .order("position", { ascending: true, nullsFirst: true })
+      .order("created_at", { ascending: true });
+
+    if (error) console.error("fetchHabits:", error);
     setHabits(data || []);
   }, [dateStr]);
 
   const fetchProgress = useCallback(async () => {
     const user = await getUser();
     if (!user) return;
-    const { data } = await supabase
-      .from("habit_progress")
-      .select("habit_id, completed")
+
+    let { data, error } = await supabase
+      .from("habit_completions")
+      .select("habit_id, completed_on, completed_at")
       .eq("user_id", user.id)
-      .eq("date", dateStr);
+      .eq("completed_on", dateStr);
+
+    let rows = data || [];
+
+    if (error || !Array.isArray(rows)) {
+      const start = new Date(`${dateStr}T00:00:00`).toISOString();
+      const end = new Date(`${dateStr}T23:59:59.999`).toISOString();
+      const res2 = await supabase
+        .from("habit_completions")
+        .select("habit_id, completed_at")
+        .eq("user_id", user.id)
+        .gte("completed_at", start)
+        .lte("completed_at", end);
+      rows = res2.data || [];
+    }
+
     const map = {};
-    (data || []).forEach((row) => (map[row.habit_id] = !!row.completed));
+    for (const r of rows) map[r.habit_id] = true;
     setProgressMap(map);
   }, [dateStr]);
 
@@ -347,22 +343,58 @@ export default function HabitTracker() {
     const startOfMonth = selectedDate.startOf("month").format("YYYY-MM-DD");
     const endOfMonth = selectedDate.endOf("month").format("YYYY-MM-DD");
 
-    const [{ data: habitsData }, { data: progressData }] = await Promise.all([
-      supabase
-        .from("habits")
-        .select("id, date")
-        .eq("user_id", user.id)
-        .gte("date", startOfMonth)
-        .lte("date", endOfMonth),
-      supabase
-        .from("habit_progress")
-        .select("habit_id, date, completed")
-        .eq("user_id", user.id)
-        .gte("date", startOfMonth)
-        .lte("date", endOfMonth),
-    ]);
+    const [{ data: habitsData }, { data: compData, error: compErr }] =
+      await Promise.all([
+        supabase
+          .from("habits")
+          .select("id, date")
+          .eq("user_id", user.id)
+          .gte("date", startOfMonth)
+          .lte("date", endOfMonth),
+        supabase
+          .from("habit_completions")
+          .select("habit_id, completed_on, completed_at")
+          .eq("user_id", user.id)
+          .gte("completed_on", startOfMonth)
+          .lte("completed_on", endOfMonth),
+      ]);
 
-    setStatusByDate(buildStatusMap(habitsData || [], progressData || []));
+    let completions = compData || [];
+    if (compErr || !Array.isArray(completions)) {
+      const startUTC = new Date(`${startOfMonth}T00:00:00`).toISOString();
+      const endUTC = new Date(`${endOfMonth}T23:59:59.999`).toISOString();
+      const { data: comp2 } = await supabase
+        .from("habit_completions")
+        .select("habit_id, completed_at")
+        .eq("user_id", user.id)
+        .gte("completed_at", startUTC)
+        .lte("completed_at", endUTC);
+      completions = comp2 || [];
+    }
+
+    const done = new Set(
+      completions.map((r) => {
+        const day =
+          r.completed_on ||
+          new Date(r.completed_at).toLocaleDateString("en-CA");
+        return `${day}:${r.habit_id}`;
+      })
+    );
+
+    const byDate = new Map(); // date -> { total, done }
+    (habitsData || []).forEach((h) => {
+      const b = byDate.get(h.date) || { total: 0, done: 0 };
+      b.total += 1;
+      if (done.has(`${h.date}:${h.id}`)) b.done += 1;
+      byDate.set(h.date, b);
+    });
+
+    const status = {};
+    for (const [date, { total, done }] of byDate) {
+      const ratio = total ? done / total : 0;
+      status[date] = ratio === 1 ? "green" : ratio >= 0.5 ? "orange" : "red";
+    }
+    setStatusByDate(status);
   }, [selectedDate]);
 
   useEffect(() => {
@@ -371,71 +403,40 @@ export default function HabitTracker() {
     fetchStatusesForMonth();
   }, [fetchHabits, fetchProgress, fetchStatusesForMonth]);
 
-  const completedCount = useMemo(
-    () => Object.values(progressMap).filter(Boolean).length,
-    [progressMap]
-  );
-  const totalHabits = habits.length;
-
-  const toggleCompletion = useCallback(
-    async (habitId) => {
-      const user = await getUser();
-      if (!user) return;
-      const current = !!progressMap[habitId];
-      const next = !current;
-
-      const { data: existing } = await supabase
-        .from("habit_progress")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("habit_id", habitId)
-        .eq("date", dateStr)
-        .maybeSingle();
-
-      if (existing) {
-        await supabase
-          .from("habit_progress")
-          .update({ completed: next })
-          .eq("user_id", user.id)
-          .eq("habit_id", habitId)
-          .eq("date", dateStr);
-      } else {
-        await supabase.from("habit_progress").insert([
-          {
-            user_id: user.id,
-            habit_id: habitId,
-            date: dateStr,
-            completed: next,
-          },
-        ]);
-      }
-
-      setProgressMap((prev) => ({ ...prev, [habitId]: next }));
-      fetchStatusesForMonth();
-    },
-    [dateStr, progressMap, fetchStatusesForMonth]
-  );
+  /* ----------------------------- CRUD functions ---------------------------- */
 
   const addHabit = useCallback(
     async ({ name, color }) => {
       const user = await getUser();
       if (!user) return;
-      await supabase
+
+      const maxPos =
+        habits.reduce(
+          (acc, h) =>
+            h.position != null && h.position > acc ? h.position : acc,
+          -1
+        ) + 1;
+
+      const { error } = await supabase
         .from("habits")
-        .insert([{ user_id: user.id, name, color, date: dateStr }]);
+        .insert([
+          { user_id: user.id, name, color, date: dateStr, position: maxPos },
+        ]);
+
+      if (error) console.error("addHabit:", error);
       setShowAddModal(false);
       setProgressMap({});
       await fetchHabits();
       await fetchStatusesForMonth();
     },
-    [dateStr, fetchHabits, fetchStatusesForMonth]
+    [dateStr, habits, fetchHabits, fetchStatusesForMonth]
   );
 
   const deleteHabit = useCallback(async () => {
     if (!habitToDelete) return;
     await supabase.from("habits").delete().eq("id", habitToDelete);
     await supabase
-      .from("habit_progress")
+      .from("habit_completions")
       .delete()
       .eq("habit_id", habitToDelete);
     setShowDeleteModal(false);
@@ -448,11 +449,12 @@ export default function HabitTracker() {
     if (!selectedHabit) return;
     const user = await getUser();
     if (!user) return;
-    await supabase
+    const { error } = await supabase
       .from("habits")
       .update({ note: noteInput })
       .eq("user_id", user.id)
       .eq("id", selectedHabit.id);
+    if (error) console.error("saveNote:", error);
 
     setHabits((prev) =>
       prev.map((h) =>
@@ -462,12 +464,126 @@ export default function HabitTracker() {
     setShowNoteModal(false);
   }, [selectedHabit, noteInput]);
 
+  /* -------------------------- Toggle & DnD persistence --------------------- */
+
+  const toggleCompletion = useCallback(
+    async (habitId) => {
+      const user = await getUser();
+      if (!user) return;
+
+      const current = !!progressMap[habitId];
+      const next = !current;
+
+      if (next) {
+        let { error } = await supabase.from("habit_completions").insert({
+          user_id: user.id,
+          habit_id: habitId,
+          completed_on: dateStr,
+          completed_at: new Date().toISOString(),
+        });
+
+        if (error) {
+          const res2 = await supabase.from("habit_completions").insert({
+            user_id: user.id,
+            habit_id: habitId,
+            completed_at: new Date().toISOString(),
+          });
+          if (res2.error)
+            console.error("insert completion fallback:", res2.error);
+        }
+      } else {
+        let { error } = await supabase
+          .from("habit_completions")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("habit_id", habitId)
+          .eq("completed_on", dateStr);
+
+        if (error) {
+          const start = new Date(`${dateStr}T00:00:00`).toISOString();
+          const end = new Date(`${dateStr}T23:59:59.999`).toISOString();
+          const res2 = await supabase
+            .from("habit_completions")
+            .delete()
+            .eq("user_id", user.id)
+            .eq("habit_id", habitId)
+            .gte("completed_at", start)
+            .lte("completed_at", end);
+          if (res2.error)
+            console.error("delete completion fallback:", res2.error);
+        }
+      }
+
+      setProgressMap((prev) => ({ ...prev, [habitId]: next }));
+      fetchStatusesForMonth();
+    },
+    [dateStr, progressMap, fetchStatusesForMonth]
+  );
+
+  // Persist order by updating rows one-by-one (RLS-friendly)
+  const handleDragEnd = useCallback(
+    async (event) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+
+      const oldIndex = habits.findIndex((h) => h.id === active.id);
+      const newIndex = habits.findIndex((h) => h.id === over.id);
+      if (oldIndex < 0 || newIndex < 0) return;
+
+      // Optimistic reorder
+      const newList = arrayMove(habits, oldIndex, newIndex).map((h, idx) => ({
+        ...h,
+        position: idx,
+      }));
+      setHabits(newList);
+
+      const user = await getUser();
+      if (!user) return;
+
+      // Only update changed rows
+      const changed = [];
+      for (let idx = 0; idx < newList.length; idx++) {
+        const h = newList[idx];
+        const prev = habits.find((x) => x.id === h.id);
+        if (!prev || prev.position !== h.position) {
+          changed.push({ id: h.id, position: h.position });
+        }
+      }
+      if (changed.length === 0) return;
+
+      // Do per-row updates to satisfy RLS (explicit id + user_id filter)
+      const updates = changed.map((c) =>
+        supabase
+          .from("habits")
+          .update({ position: c.position })
+          .eq("id", c.id)
+          .eq("user_id", user.id)
+      );
+
+      const results = await Promise.allSettled(updates);
+      const failed = results.filter((r) => r.status === "rejected");
+      if (failed.length) {
+        console.error("persist order error (batched updates):", failed);
+        fetchHabits();
+      }
+    },
+    [habits, fetchHabits]
+  );
+
+  /* ----------------------------------- UI ---------------------------------- */
+
+  const completedCount = useMemo(
+    () => Object.values(progressMap).filter(Boolean).length,
+    [progressMap]
+  );
+  const totalHabits = habits.length;
+
   return (
     <div className="min-h-screen text-white p-6 rounded-lg max-w-xl mx-auto relative">
       <DateNavigator
         selectedDate={selectedDate}
         onChange={setSelectedDate}
-        dotForDate={(d) => statusByDate[d]}
+        dotForDate={(d) => statusByDate[d]} // calendar dots restored
       />
 
       <h3 className="text-xl font-bold mb-4">
@@ -483,28 +599,39 @@ export default function HabitTracker() {
         Add a new habit <PlusIcon className="inline w-4 h-4" />
       </button>
 
-      {/* Habit List */}
+      {/* Habit List with dnd-kit */}
       <div className="space-y-3 mt-4">
         {habits.length === 0 ? (
           <p className="text-gray-500 text-center">No habits found.</p>
         ) : (
-          habits.map((habit) => (
-            <HabitItem
-              key={habit.id}
-              habit={habit}
-              checked={progressMap[habit.id]}
-              onToggle={toggleCompletion}
-              onDelete={(id) => {
-                setHabitToDelete(id);
-                setShowDeleteModal(true);
-              }}
-              onOpenNote={(h) => {
-                setSelectedHabit(h);
-                setNoteInput(h.note || "");
-                setShowNoteModal(true);
-              }}
-            />
-          ))
+          <DndContext
+            sensors={dragSensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={habits.map((h) => h.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              {habits.map((habit) => (
+                <SortableHabitItem
+                  key={habit.id}
+                  habit={habit}
+                  checked={progressMap[habit.id]}
+                  onToggle={toggleCompletion}
+                  onDelete={(id) => {
+                    setHabitToDelete(id);
+                    setShowDeleteModal(true);
+                  }}
+                  onOpenNote={(h) => {
+                    setSelectedHabit(h);
+                    setNoteInput(h.note || "");
+                    setShowNoteModal(true);
+                  }}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
         )}
       </div>
 
