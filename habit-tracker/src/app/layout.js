@@ -1,10 +1,9 @@
-// src/app/layout.js  (server component; no "use client")
+// src/app/layout.js (server component)
 import { Geist, Geist_Mono, Play } from "next/font/google";
 import { MantineProvider } from "@mantine/core";
 import "@mantine/core/styles.css";
 import "./globals.css";
 import "@mantine/dates/styles.css";
-import Head from "next/head";
 import ClientRoot from "./ClientRoot";
 
 const geistSans = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
@@ -18,9 +17,29 @@ const play = Play({
   variable: "--font-play",
 });
 
+// ✅ App Router: manifest + icons here
 export const metadata = {
   title: "Habify",
   description: "Track your habits with Habify",
+  manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      {
+        url: "/icons/apple-touch-icon-180.png",
+        sizes: "180x180",
+        type: "image/png",
+      },
+    ],
+  },
+};
+
+// ✅ App Router: themeColor goes in viewport export (fixes your warning)
+export const viewport = {
+  themeColor: "#9333EA",
 };
 
 export default function RootLayout({ children }) {
@@ -29,12 +48,6 @@ export default function RootLayout({ children }) {
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${play.variable}`}
     >
-      <Head>
-        <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#9333ea" />
-        <meta name="mobile-web-app-capable" content="yes" />
-        <link rel="apple-touch-icon" href="/icon-192.png" />
-      </Head>
       <body className="antialiased">
         <MantineProvider withGlobalStyles withNormalizeCSS>
           <ClientRoot>{children}</ClientRoot>
