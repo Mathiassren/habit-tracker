@@ -1,11 +1,11 @@
+// next.config.js
 const withPWA = require("next-pwa")({
-  dest: "public",
+  dest: "public", // Service worker goes into /public
   register: true,
   skipWaiting: true,
+  disable: process.env.NODE_ENV === "development", // only enable in prod
 });
 
 module.exports = withPWA({
   reactStrictMode: true,
 });
-// This configuration enables PWA support in the Next.js application
-// and sets the public directory for service worker files.
