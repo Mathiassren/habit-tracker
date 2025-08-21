@@ -5,8 +5,9 @@ import anime from "animejs";
 import { useAuth } from "@/hooks/useAuth"; // <-- your hook exactly as you sent
 import { useRouter } from "next/navigation";
 
-import AuthForm from "@/components/AuthForm";
-import GoogleButton from "@/components/GoogleButton";
+import AuthForm from "@/app/components/AuthForm";
+import GoogleButton from "@/app/components/GoogleButton";
+
 import { useAuthForm } from "@/hooks/useAuthForm";
 
 export default function Home() {

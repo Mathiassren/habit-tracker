@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useMemo } from "react";
+import AnalyticsPage from "../analytics/page";
 
 const ActivityCalendar = dynamic(() => import("react-activity-calendar"), {
   ssr: false,
@@ -101,7 +102,6 @@ export default function HabitHeatmap({
             "Nov",
             "Dec",
           ],
-
           totalCount: `${total} completions in {{year}}`,
           weekDays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
         }}
@@ -116,6 +116,7 @@ export default function HabitHeatmap({
         })}
         showWeekdayLabels={false}
       />
+      <AnalyticsPage className="p-0" />
     </section>
   );
 }

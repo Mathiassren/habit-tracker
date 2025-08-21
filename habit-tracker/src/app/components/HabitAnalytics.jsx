@@ -342,15 +342,10 @@ export default function HabitAnalytics() {
 
   return (
     <section className="w-full text-gray-100">
-      <div className="text-sm text-gray-300 mb-4">
-        <span className="opacity-75">{yearCompletedDays}</span> completions in{" "}
-        {year}
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-[280px,1fr] gap-8">
         {/* Left: calendar */}
         <div className="space-y-6">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center pt-10 gap-2">
             <span
               className="inline-block w-3 h-3 rounded-sm"
               style={{ backgroundColor: "#C084FC" }}

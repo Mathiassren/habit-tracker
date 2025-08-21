@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { twMerge } from "tailwind-merge";
 
 // Render the charts only on the client to avoid hydration mismatches
 const HabitAnalytics = dynamic(
@@ -12,10 +13,10 @@ const HabitAnalytics = dynamic(
   }
 );
 
-export default function AnalyticsPage() {
+export default function AnalyticsPage({ className = "" }) {
   return (
-    <div className="p-8">
-      <HabitAnalytics />
+    <div className={twMerge("p-8", className)}>
+      <HabitAnalytics className={className} /> {/* optional: pass down */}
     </div>
   );
 }
