@@ -637,10 +637,12 @@ export default function DailylogPage() {
 
       {/* Modals */}
       <AddHabitModal
+        key={showAddModal ? "open" : "closed"} // forces a fresh mount when opening
         open={showAddModal}
         onClose={() => setShowAddModal(false)}
         onAdd={addHabit}
       />
+
       <ConfirmModal
         open={showDeleteModal}
         onConfirm={deleteHabit}

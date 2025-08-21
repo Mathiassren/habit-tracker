@@ -13,7 +13,7 @@ export default function Nav() {
   const toggleMenu = () => setIsOpen(!isOpen); // Toggle menu function
 
   return (
-    <nav className="bg-gray-900 text-white p-4">
+    <nav className=" text-white p-4 border-b-[0.5px] border-gray-700">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
         {/* Logo */}
         <Link href="/">
@@ -50,7 +50,7 @@ export default function Nav() {
         ) : (
           <button
             onClick={loginWithGoogle}
-            className="md:hidden bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+            className="md:hidden bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
           >
             Login
           </button>

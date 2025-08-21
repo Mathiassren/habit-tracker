@@ -1,21 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import SplashScreen from "@/app/components/SplashScreen";
+import { useEffect, useState } from "react";
 import Nav from "@/app/components/nav";
 
 export default function ClientRoot({ children }) {
-  const [ready, setReady] = useState(false);
-
+  // If you had splash state logic here, remove it or adapt for your new login
   return (
     <>
-      {!ready && <SplashScreen onFinish={() => setReady(true)} />}
-      {ready && (
-        <>
-          <Nav />
-          {children}
-        </>
-      )}
+      <Nav />
+      {children}
     </>
   );
 }

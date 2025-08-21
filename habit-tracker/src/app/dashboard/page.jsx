@@ -1,4 +1,4 @@
-"use client"; // Forces client-side execution
+"use client";
 
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
@@ -10,61 +10,81 @@ import {
   DocumentChartBarIcon,
   AdjustmentsHorizontalIcon,
 } from "@heroicons/react/24/outline";
+import Lottie from "lottie-react";
+import dashboardAnim from "../../../public/animations/Space.json"; // <-- put JSON here
 
 export default function Dashboard() {
   const { user, loading } = useAuth();
   const router = useRouter();
 
+  // Protect route
   useEffect(() => {
     if (!loading && !user) {
       router.push("/");
     }
-  }, [user, loading]);
+  }, [user, loading, router]);
 
-  if (loading) return;
+  if (loading) return null;
   if (!user) return null;
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-center">
-        <img
-          src={user.user_metadata?.avatar_url || null} // Prevent null error
-          alt="User Avatar"
-          className="w-20 h-20 mb-10 rounded-full"
-        />
+    <div className="relative min-h-screen flex flex-col items-center justify-start bg-gray-950 overflow-hidden">
+      {/* Subtle animated background */}
+      <div className="absolute inset-0 opacity-40 w-100 pointer-events-none">
+        <Lottie animationData={dashboardAnim} loop autoPlay />
       </div>
-      <h2 className="text-2xl font-bold">
-        Welcome, {user.user_metadata.full_name}!
-      </h2>
 
-      <img alt="" />
-      <p className="mt-2">Email: {user.email}</p>
-      <section className="grid grid-cols-2 gap-4 mt-4">
-        <Link href="/">
-          <div className="bg-gray-800 w-36 h-36 rounded-lg items-center flex flex-col justify-center">
-            <HomeIcon className="w-10 h-10 mb-1 text-gray-400" />
-            Home
-          </div>
-        </Link>
-        <Link href="/heatmap">
-          <div className="bg-gray-800 w-36 h-36 rounded-lg items-center flex flex-col justify-center">
-            <ChartBarIcon className="w-10 h-10 mb-1 text-gray-400" />
-            Dashboard
-          </div>
-        </Link>
-        <Link href="/dailylog">
-          <div className="bg-gray-800 w-36 h-36 rounded-lg items-center flex flex-col justify-center">
-            <DocumentChartBarIcon className="w-10 h-10 mb-1 text-gray-400" />
-            Daily Log
-          </div>
-        </Link>
-        <Link href="/preferences">
-          <div className="bg-gray-800 w-36 h-36 rounded-lg items-center flex flex-col justify-center">
-            <AdjustmentsHorizontalIcon className="w-10 h-10 mb-1 text-gray-400" />
-            Preferences
-          </div>
-        </Link>
+      {/* Profile */}
+      <div className="relative z-10 flex flex-col items-center mt-16">
+        <img
+          src={user.user_metadata?.avatar_url || "/default-avatar.png"}
+          alt={user.user_metadata?.full_name || "User Avatar"}
+          className="w-24 h-24 rounded-full shadow-lg border-2 border-purple-500 object-cover"
+          referrerPolicy="no-referrer"
+        />
+        <h2 className="mt-6 text-3xl font-bold text-white drop-shadow">
+          Welcome, {user.user_metadata?.full_name || "friend"}!
+        </h2>
+        <p className="text-gray-300 mt-1">{user.email}</p>
+      </div>
+
+      {/* Navigation Grid */}
+      <section className="relative z-10 grid grid-cols-2 gap-6 mt-14">
+        <NavCard
+          href="/"
+          icon={<HomeIcon className="w-12 h-12 text-purple-400" />}
+          label="Home"
+        />
+        <NavCard
+          href="/heatmap"
+          icon={<ChartBarIcon className="w-12 h-12 text-pink-400" />}
+          label="Dashboard"
+        />
+        <NavCard
+          href="/dailylog"
+          icon={<DocumentChartBarIcon className="w-12 h-12 text-emerald-400" />}
+          label="Daily Log"
+        />
+        <NavCard
+          href="/preferences"
+          icon={
+            <AdjustmentsHorizontalIcon className="w-12 h-12 text-blue-400" />
+          }
+          label="Preferences"
+        />
       </section>
     </div>
+  );
+}
+
+/* Reusable tile */
+function NavCard({ href, icon, label }) {
+  return (
+    <Link href={href} className="group">
+      <div className="bg-gray-800/70 backdrop-blur-md w-40 h-40 rounded-2xl flex flex-col items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-105 group-hover:bg-gray-700">
+        {icon}
+        <span className="text-white font-medium mt-2">{label}</span>
+      </div>
+    </Link>
   );
 }

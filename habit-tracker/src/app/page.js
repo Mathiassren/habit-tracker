@@ -1,16 +1,17 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import anime from "animejs";
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import Lottie from "lottie-react";
+import splashAnim from "../../public/animations/login.json"; // put your .json here
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/services/supabase";
 
 export default function Home() {
-  const gridRef = useRef(null);
   const router = useRouter();
 
-  // Auth API from your hook (Google login + current user)
+  // Auth API from your hook (Google + current user)
   const { user, loginWithGoogle } = useAuth();
 
   // UI state
@@ -21,8 +22,8 @@ export default function Home() {
   const [authError, setAuthError] = useState(null);
   const [infoMsg, setInfoMsg] = useState(null);
 
+  // Clean up OAuth hash on first load
   useEffect(() => {
-    // Let supabase read the hash (detectSessionInUrl=true by default)
     supabase.auth.getSession().finally(() => {
       if (
         typeof window !== "undefined" &&
@@ -42,25 +43,6 @@ export default function Home() {
     if (user) router.push("/dashboard");
   }, [user, router]);
 
-  // Staggered grid animation
-  useEffect(() => {
-    if (!gridRef.current) return;
-    anime({
-      targets: ".staggering-grid .el",
-      scale: [
-        { value: 0.5, easing: "easeOutSine", duration: 800 },
-        { value: 1, easing: "easeInOutQuad", duration: 800 },
-      ],
-      opacity: [
-        { value: 0.3, easing: "easeOutSine", duration: 800 },
-        { value: 1, easing: "easeInOutQuad", duration: 800 },
-      ],
-      delay: anime.stagger(150, { grid: [6, 6], from: "center" }),
-      loop: true,
-      direction: "alternate",
-    });
-  }, []);
-
   async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
@@ -74,7 +56,7 @@ export default function Home() {
           password,
         });
         if (error) throw error;
-        // Redirect happens via useEffect(user)
+        // redirect happens via useEffect(user)
       } else {
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
@@ -95,7 +77,10 @@ export default function Home() {
       return;
     }
     try {
-      const redirectTo = `${window.location.origin}/reset`;
+      const redirectTo =
+        (typeof window !== "undefined"
+          ? window.location.origin
+          : process.env.NEXT_PUBLIC_SITE_URL) + "/reset";
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo,
       });
@@ -113,177 +98,181 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col justify-start items-start bg-gray-900 text-white p-8">
-      {/* Main Content */}
-      <main className="z-10 max-w-md w-full">
-        <h1 className="text-4xl font-bold text-white">
-          Happily track your habits daily with Habify
-        </h1>
-        <p className="mt-4 text-2xl text-gray-300">
-          Build consistency and improve your routine.
-        </p>
-        <p className="text-gray-400 opacity-50 text-xs mt-4">
-          Free to use. No credit card required.
-        </p>
+    <div className="relative min-h-[93vh] overflow-hidden bg-[#0b0b0f] text-white">
+      {/* Center content */}
+      <div className="relative z-10 mx-auto flex max-w-xl flex-col items-center justify-center px-6">
+        {/* Title + tagline */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="mb-6 text-center"
+        >
+          <h1 className="text-5xl font-extrabold tracking-wide">
+            <span className="bg-gradient-to-r from-[#2980B9] via-[#6DD5FA] to-[#FFFFFF] bg-clip-text text-transparent">
+              Habify
+            </span>
+          </h1>
+          <p className="mt-2 text-sm text-gray-400">
+            Small steps. Real progress.
+          </p>
+        </motion.div>
 
-        {/* Auth form */}
-        <form onSubmit={handleSubmit} className="mt-6">
-          <div className="mb-4">
-            <label htmlFor="email" className="block mb-2 text-sm text-gray-300">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-sm border border-gray-600 bg-transparent px-3 py-2 outline-none focus:border-purple-500"
-              placeholder="you@example.com"
-              autoComplete="email"
-              aria-invalid={!!authError}
-            />
+        {/* Auth card */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
+          className="w-full rounded-2xl border border-gray-800/70 bg-gray-900/60 p-6 backdrop-blur"
+        >
+          {/* Email/password */}
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <div>
+              <label
+                htmlFor="email"
+                className="mb-1 block text-xs text-gray-400"
+              >
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full rounded-lg border border-gray-700 bg-gray-800/70 px-3 py-2 text-sm text-gray-100 outline-none focus:border-purple-500"
+                placeholder="you@example.com"
+                autoComplete="email"
+                aria-invalid={!!authError}
+              />
+            </div>
+
+            <div>
+              <div className="mb-1 flex items-center justify-between">
+                <label htmlFor="password" className="text-xs text-gray-400">
+                  Password
+                </label>
+                {mode === "login" && (
+                  <button
+                    type="button"
+                    className="text-xs text-gray-400 underline underline-offset-4 hover:text-gray-200"
+                    onClick={handleForgotPassword}
+                  >
+                    Forgot password?
+                  </button>
+                )}
+              </div>
+              <input
+                id="password"
+                type="password"
+                required
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-lg border border-gray-700 bg-gray-800/70 px-3 py-2 text-sm text-gray-100 outline-none focus:border-purple-500"
+                placeholder={
+                  mode === "signup"
+                    ? "Create a strong password"
+                    : "Your password"
+                }
+                autoComplete={
+                  mode === "signup" ? "new-password" : "current-password"
+                }
+                aria-invalid={!!authError}
+              />
+            </div>
+
+            {authError && (
+              <div className="rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+                {authError}
+              </div>
+            )}
+            {infoMsg && (
+              <div className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">
+                {infoMsg}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="mt-2 w-full rounded-lg bg-gradient-to-r from-[#2980B9] via-[#6DD5FA] to-[#FFFFFF] px-4 py-2 text-sm font-semibold text-white shadow transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {loading
+                ? mode === "login"
+                  ? "Logging in…"
+                  : "Creating account…"
+                : mode === "login"
+                ? "Login"
+                : "Create Account"}
+            </button>
+          </form>
+
+          {/* Divider */}
+          <div className="my-4 text-center text-xs uppercase tracking-wide text-gray-500">
+            or
           </div>
 
-          <div className="mb-2">
-            <div className="flex items-center justify-between mb-2">
-              <label htmlFor="password" className="text-sm text-gray-300">
-                Password
-              </label>
-              {mode === "login" && (
+          {/* Google OAuth via your hook */}
+          <button
+            onClick={loginWithGoogle}
+            className="group inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-700 bg-gray-800/70 px-4 py-2 text-sm font-medium text-gray-100 transition hover:bg-gray-800"
+            aria-label={
+              mode === "login" ? "Continue with Google" : "Sign up with Google"
+            }
+          >
+            <svg
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              className="h-5 w-5"
+              fill="currentColor"
+            >
+              <path d="M21.35 11.1h-9.18v2.92h5.28c-.23 1.5-1.78 4.4-5.28 4.4-3.18 0-5.78-2.63-5.78-5.86s2.6-5.86 5.78-5.86c1.81 0 3.02.77 3.71 1.43l2.53-2.45C16.85 3.5 14.67 2.5 12.17 2.5 6.99 2.5 2.75 6.74 2.75 11.96s4.24 9.46 9.42 9.46c5.41 0 8.98-3.8 8.98-9.17 0-.62-.06-1.09-.2-1.55z" />
+            </svg>
+            {mode === "login" ? "Continue with Google" : "Sign up with Google"}
+          </button>
+
+          {/* Mode switch */}
+          <p className="mt-4 text-center text-sm text-gray-400">
+            {mode === "login" ? (
+              <>
+                No account?{" "}
                 <button
                   type="button"
-                  className="text-xs underline underline-offset-4 text-gray-400 hover:text-gray-200"
-                  onClick={handleForgotPassword}
+                  onClick={switchMode}
+                  className="underline underline-offset-4 hover:text-gray-200"
                 >
-                  Forgot password?
+                  Sign up
                 </button>
-              )}
-            </div>
-            <input
-              id="password"
-              type="password"
-              required
-              minLength={6}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-sm border border-gray-600 bg-transparent px-3 py-2 outline-none focus:border-purple-500"
-              placeholder={
-                mode === "signup" ? "Create a strong password" : "Your password"
-              }
-              autoComplete={
-                mode === "signup" ? "new-password" : "current-password"
-              }
-              aria-invalid={!!authError}
-            />
-          </div>
-
-          {authError && (
-            <p className="mt-3 text-sm text-red-400" role="alert">
-              {authError}
-            </p>
-          )}
-          {infoMsg && (
-            <p className="mt-3 text-sm text-emerald-400" role="status">
-              {infoMsg}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="mt-6 w-full bg-blue-600 disabled:opacity-60 disabled:cursor-not-allowed text-white py-2 px-6 rounded-lg shadow-lg transition-transform duration-300 transform hover:scale-105 hover:bg-blue-700"
-          >
-            {loading
-              ? mode === "login"
-                ? "Logging in..."
-                : "Creating account..."
-              : mode === "login"
-              ? "Login"
-              : "Create Account"}
-          </button>
-        </form>
-
-        {/* Divider */}
-        <div className="flex items-center my-4">
-          <div className="flex-grow border-t border-gray-700"></div>
-          <span className="mx-3 text-gray-400">OR</span>
-          <div className="flex-grow border-t border-gray-700"></div>
-        </div>
-
-        {/* Google OAuth */}
-        <button
-          onClick={loginWithGoogle}
-          className="w-full flex items-center justify-center gap-3 border border-gray-600 text-white py-2 px-6 rounded-lg shadow-lg transition-transform duration-300 transform hover:scale-105 hover:bg-gray-800"
-          aria-label={
-            mode === "login" ? "Continue with Google" : "Sign up with Google"
-          }
-        >
-          <svg
-            className="w-5 h-5"
-            viewBox="0 0 533.5 544.3"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden="true"
-          >
-            <path
-              fill="#4285F4"
-              d="M533.5 278.4c0-17.4-1.6-34-4.6-50.2H272v95.1h146.9c-6.4 34.3-25.4 63.4-54.2 82.9l87.6 68c51.1-47.1 81.2-116.4 81.2-195.8z"
-            />
-            <path
-              fill="#34A853"
-              d="M272 544.3c73.5 0 135-24.3 180-66l-87.6-68c-24.4 16.4-55.5 26-92.4 26-71.1 0-131.3-48-152.8-112.4l-90.5 69.9c43.9 87.5 135.3 150.5 243.3 150.5z"
-            />
-            <path
-              fill="#FBBC05"
-              d="M119.2 323.9c-10.2-30.5-10.2-63.5 0-94l-90.5-69.9C-21.8 212.7-21.8 331.6 28.7 415.8l90.5-69.9z"
-            />
-            <path
-              fill="#EA4335"
-              d="M272 107.7c39.9 0 75.8 13.7 104.1 40.8l77.8-77.8C407 24.2 345.5 0 272 0 164 0 72.6 63 28.7 152.1l90.5 69.9C140.7 155.7 200.9 107.7 272 107.7z"
-            />
-          </svg>
-          {mode === "login" ? "Continue with Google" : "Sign up with Google"}
-        </button>
-
-        {/* Mode switch text */}
-        <p className="mt-4 text-sm text-gray-400">
-          {mode === "login" ? (
-            <>
-              No account?{" "}
-              <button
-                type="button"
-                onClick={switchMode}
-                className="underline underline-offset-4 hover:text-gray-200"
-              >
-                Sign up
-              </button>
-            </>
-          ) : (
-            <>
-              Already have an account?{" "}
-              <button
-                type="button"
-                onClick={switchMode}
-                className="underline underline-offset-4 hover:text-gray-200"
-              >
-                Log in
-              </button>
-            </>
-          )}
-        </p>
-      </main>
-
-      {/* Animated Grid */}
-      <div className="mt-20">
-        <div ref={gridRef} className="staggering-grid grid grid-cols-12 gap-2">
-          {Array.from({ length: 36 }).map((_, index) => (
-            <div
-              key={index}
-              className="el w-6 h-6 bg-blue-500 rounded-md opacity-50"
-            />
-          ))}
-        </div>
+              </>
+            ) : (
+              <>
+                Already have an account?{" "}
+                <button
+                  type="button"
+                  onClick={switchMode}
+                  className="underline underline-offset-4 hover:text-gray-200"
+                >
+                  Log in
+                </button>
+              </>
+            )}
+          </p>
+        </motion.div>
       </div>
+
+      {/* Lottie animation pinned at bottom */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-48 opacity-80">
+        <Lottie
+          animationData={splashAnim}
+          loop
+          autoplay
+          style={{ height: "100%", width: "100%" }}
+        />
+      </div>
+
+      {/* subtle top gradient overlay for depth */}
+      <div className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-b from-black/30 via-transparent to-black/40" />
     </div>
   );
 }

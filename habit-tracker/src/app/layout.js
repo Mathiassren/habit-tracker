@@ -1,3 +1,4 @@
+// src/app/layout.js  (server component; no "use client")
 import { Geist, Geist_Mono, Play } from "next/font/google";
 import { MantineProvider } from "@mantine/core";
 import "@mantine/core/styles.css";
