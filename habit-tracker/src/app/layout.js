@@ -1,4 +1,4 @@
-// src/app/layout.js  (server component)
+// src/app/layout.js
 import { Geist, Geist_Mono, Play } from "next/font/google";
 import { MantineProvider } from "@mantine/core";
 import "@mantine/core/styles.css";
@@ -17,18 +17,13 @@ const play = Play({
   variable: "--font-play",
 });
 
+// App Router generates <head> for you from this:
 export const metadata = {
   title: "Habify",
   description: "Track your habits with Habify",
-  manifest: "/manifest.json",
-  icons: {
-    icon: "/favicon.ico", // classic
-    shortcut: "/favicon.ico",
-    apple: "/apple-touch-icon.png", // iOS home screen
-  },
 };
 
-// move themeColor to viewport per Next.js guidance
+// Next.js wants viewport (incl. themeColor) here:
 export const viewport = {
   themeColor: "#9333ea",
 };
