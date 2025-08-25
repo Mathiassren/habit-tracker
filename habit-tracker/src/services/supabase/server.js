@@ -11,6 +11,8 @@ export function createClient() {
     {
       cookies: {
         get: (name) => cookieStore.get(name)?.value,
+
+        // Next 14: set(name, value, options)
         set: (name, value, options) => {
           cookieStore.set(name, value, {
             path: "/",
@@ -19,6 +21,8 @@ export function createClient() {
             ...options,
           });
         },
+
+        // Next 14: set(name, "", { maxAge: 0, ... })
         remove: (name, options) => {
           cookieStore.set(name, "", {
             path: "/",
