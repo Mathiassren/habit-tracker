@@ -4,7 +4,9 @@ import { MantineProvider } from "@mantine/core";
 import "@mantine/core/styles.css";
 import "@mantine/dates/styles.css";
 import "./globals.css";
-import ClientRoot from "./ClientRoot";
+
+import { createClient } from "../services/supabase/server";
+import ClientRoot from "./ClientRoot"; // <-- make sure the file is exactly "ClientRoot.jsx"
 
 const geistSans = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
 const geistMono = Geist_Mono({
@@ -17,18 +19,19 @@ const play = Play({
   variable: "--font-play",
 });
 
-// App Router generates <head> for you from this:
 export const metadata = {
   title: "Habify",
   description: "Track your habits with Habify",
 };
 
-// Next.js wants viewport (incl. themeColor) here:
-export const viewport = {
-  themeColor: "#9333ea",
-};
+export const viewport = { themeColor: "#9333ea" };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return (
     <html
       lang="en"
@@ -36,7 +39,7 @@ export default function RootLayout({ children }) {
     >
       <body className="antialiased">
         <MantineProvider withGlobalStyles withNormalizeCSS>
-          <ClientRoot>{children}</ClientRoot>
+          <ClientRoot user={user}>{children}</ClientRoot>
         </MantineProvider>
       </body>
     </html>

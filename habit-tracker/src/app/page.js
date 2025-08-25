@@ -59,11 +59,22 @@ export default function Home() {
 
     try {
       if (mode === "login") {
-        const { error } = await supabase.auth.signInWithPassword({
+        // ⬇️ change: grab data.session, then sync cookies server-side
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (error) throw error;
+
+        await fetch("/auth/refresh", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ event: "SIGNED_IN", session: data.session }),
+        });
+
+        // redirect after cookies are set so SSR/nav are correct
+        window.location.href = "/dashboard";
+        return; // ensure we don't run the rest of the block
       } else {
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
