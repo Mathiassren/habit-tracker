@@ -30,8 +30,13 @@ export default function Dashboard() {
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-start bg-gray-950 overflow-hidden">
       {/* Subtle animated background */}
-      <div className="absolute inset-0 opacity-40 w-100 pointer-events-none">
-        <Lottie animationData={dashboardAnim} loop autoPlay />
+      <div className="lottie-center-desktop">
+        <Lottie
+          className="w-full h-full"
+          animationData={dashboardAnim}
+          loop
+          autoPlay
+        />
       </div>
 
       {/* Profile */}

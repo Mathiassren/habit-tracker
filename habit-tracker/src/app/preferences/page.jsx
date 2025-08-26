@@ -23,7 +23,7 @@ export default function Dashboard() {
   });
 
   return (
-    <div className="p-8">
+    <div className="p-8 desktop-container">
       <h1 className="font-play font-bold text-xl">Preferences</h1>
       <h2 className="text-lg font-play text-gray-300">
         Welcome, {user?.user_metadata?.full_name?.split(" ")[0] || "Guest"}!

@@ -33,21 +33,23 @@ const PreferencesTab = ({ user, createdAt, setUser = () => {} }) => {
   };
 
   return (
-    <div>
+    <div className="">
       <h2 className="font-bold font-play mb-4">Account Details</h2>
       <div className="grid grid-cols-[100px_1fr] gap-y-2 text-sm text-gray-300">
-        <span className="font-play">Status</span>
-        <span>
+        <span className="font-play md:text-lg flex items-center">Status</span>
+        <span className="flex items-center">
           <span className="text-xs bg-[#072424] px-2 rounded-full p-1 text-[#09D8B9]">
             {user ? "Authenticated" : "Not Authenticated"}
           </span>
         </span>
 
-        <span className="font-play">Created on</span>
-        <span>{createdAt}</span>
+        <span className="font-play md:text-lg flex items-center">
+          Created on
+        </span>
+        <span className="flex items-center">{createdAt}</span>
 
-        <span className="font-play">Name</span>
-        <div className="flex-block items-center">
+        <span className="font-play md:text-lg flex items-center">Name</span>
+        <div className="flex items-center gap-2">
           <input
             type="text"
             value={fullName}
@@ -57,13 +59,16 @@ const PreferencesTab = ({ user, createdAt, setUser = () => {} }) => {
           <button
             onClick={updateName}
             disabled={loading}
-            className="bg-[#4F46E5] mt-4 hover:bg-purple-600 text-white px-3 py-1 rounded-md text-sm"
+            className="bg-[#4F46E5] md:ml-4 mt-4 md:mt-0 hover:bg-purple-600 text-white px-3 py-1 rounded-md text-sm"
           >
             {loading ? "Updating..." : "Save"}
           </button>
         </div>
-        <span className="font-play">Email</span>
-        <span className="text-blue-400">{user?.email || "Unknown"}</span>
+
+        <span className="font-play md:text-lg flex items-center">Email</span>
+        <span className="flex items-center text-blue-400">
+          {user?.email || "Unknown"}
+        </span>
       </div>
     </div>
   );

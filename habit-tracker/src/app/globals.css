@@ -20,3 +20,27 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   margin: 0;
 }
+
+@layer utilities {
+  .desktop-container {
+    @apply md:p-8 md:max-w-5xl md:mx-auto;
+  }
+}
+
+h1,
+h2,
+p,
+a,
+div,
+button {
+  @apply font-play;
+}
+
+/* globals.css */
+.lottie-center-desktop {
+  @apply absolute pointer-events-none opacity-40 z-0;
+  @apply w-full; /* mobile default */
+  @apply md:w-[28rem] md:h-[28rem]; /* size on desktop */
+  @apply md:left-2/4 md:top-48; /* position to center point */
+  @apply md:-translate-x-1/2 md:-translate-y-1/2; /* center via translate */
+}
