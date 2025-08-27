@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { supabase } from "@/services/supabase";
 import { UploadIcon } from "@radix-ui/react-icons";
 import Image from "next/image";
 
 const ManageTab = ({ user, setUser }) => {
+  const DEFAULT_AVATAR = "/default-avatar.png";
+  const setDefaultOnce = useRef(false);
   // --- state
   const [fullName, setFullName] = useState(
     user?.user_metadata?.full_name || ""
@@ -28,6 +30,40 @@ const ManageTab = ({ user, setUser }) => {
     setFullName(user?.user_metadata?.full_name || "");
     setAvatarUrl(user?.user_metadata?.avatar_url || "");
   }, [user]);
+
+  // --- ensure a default avatar for first-time users (runs once per user)
+  useEffect(() => {
+    if (!user?.id) return;
+    if (setDefaultOnce.current) return; // guard
+    const current = user.user_metadata?.avatar_url;
+    if (current && current.trim() !== "") return;
+
+    (async () => {
+      try {
+        // 1) persist to auth metadata
+        await supabase.auth.updateUser({
+          data: { avatar_url: DEFAULT_AVATAR },
+        });
+        // 2) persist to profiles table (upsert)
+        await supabase.from("profiles").upsert(
+          {
+            id: user.id,
+            avatar_url: DEFAULT_AVATAR,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "id" }
+        );
+        // 3) refresh local auth user + local state
+        await supabase.auth.refreshSession();
+        const { data } = await supabase.auth.getUser();
+        if (data?.user) setUser?.(data.user);
+        setAvatarUrl(DEFAULT_AVATAR);
+        setDefaultOnce.current = true;
+      } catch (e) {
+        console.error("Default avatar init failed:", e);
+      }
+    })();
+  }, [user, setUser]);
 
   // email/password vs OAuth detection
   const hasEmailIdentity = useMemo(() => {
@@ -164,7 +200,10 @@ const ManageTab = ({ user, setUser }) => {
             />
           ) : (
             <div className="w-16 h-16 rounded-full bg-gray-700 grid place-items-center text-xs text-white/60">
-              No avatar
+              <img
+                src={user.user_metadata?.avatar_url || "/default-avatar.png"} // Prevent null error
+                alt="User Avatar"
+              />
             </div>
           )}
 

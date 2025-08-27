@@ -19,12 +19,11 @@ export default function Nav() {
         <Link href="/">
           <div className="flex items-center ">
             <Image
-              src="/habitDots.png"
+              src="/habifyLogo3.png"
               alt="Habify Logo"
-              width={50}
+              width={100}
               height={50}
             />
-            <p>Habify</p>
           </div>
         </Link>
 
@@ -87,7 +86,6 @@ export default function Nav() {
               </li>
             </Link>
           </ul>
-
           <UserMenu user={user} logout={logout} mobile />
         </div>
       )}
@@ -98,33 +96,31 @@ export default function Nav() {
 /* Extracted User Menu Component */
 function UserMenu({ user, logout, mobile = false }) {
   return (
-    <div
-      className={`flex items-center space-x-3 ${
-        mobile ? "flex-col space-x-0 space-y-3" : ""
-      }`}
-    >
+    <div className={`flex items-center space-x-3 ${mobile ? "flex-col" : ""}`}>
       <div className="flex mt-6 items-center gap-4">
         <img
-          src={user.user_metadata?.avatar_url || ""} // Prevent null error
+          src={user.user_metadata?.avatar_url || "/default.png"} // Prevent null error
           alt="User Avatar"
           className="w-10 h-10 rounded-xl"
         />
         <span className="text-sm font-bold">
-          <span class="mr-2">Welcome</span>
-          {user.user_metadata?.full_name || "Guest"}
+          <span className="mr-2">Welcome</span>
+          <span className="text-[#7158BD]">
+            {user.user_metadata?.full_name || "Guest"}
+          </span>
         </span>
         <Link href="/dailylog">
-          <p class="hover:text-white hidden md:block ease-in duration-100 text-gray-400">
+          <p className="hover:text-white hidden md:block ease-in duration-100 text-gray-400">
             Dailylog
           </p>
         </Link>
         <Link href="/heatmap">
-          <p class="hover:text-white hidden md:block ease-in duration-100 text-gray-400">
+          <p className="hover:text-white hidden md:block ease-in duration-100 text-gray-400">
             Dashboard
           </p>
         </Link>
         <Link href="/preferences">
-          <p class="hover:text-white hidden md:block ease-in duration-100 text-gray-400">
+          <p className="hover:text-white hidden md:block ease-in duration-100 text-gray-400">
             Preferences
           </p>
         </Link>
@@ -132,7 +128,7 @@ function UserMenu({ user, logout, mobile = false }) {
         <button
           type="button"
           onClick={logout}
-          className="border-2 border-solid hidden md:block rounded-xl px-6 p-2 transition hover:bg-gray-800"
+          className="border-2 border-solid md:block rounded-xl px-6 p-2 transition hover:bg-gray-800"
         >
           Logout
         </button>
