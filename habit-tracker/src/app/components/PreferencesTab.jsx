@@ -5,7 +5,6 @@ const PreferencesTab = ({ user, createdAt, setUser = () => {} }) => {
   const [fullName, setFullName] = useState(
     user?.user_metadata?.full_name || ""
   );
-
   const [loading, setLoading] = useState(false);
 
   const updateName = async () => {
@@ -33,42 +32,65 @@ const PreferencesTab = ({ user, createdAt, setUser = () => {} }) => {
   };
 
   return (
-    <div className="">
-      <h2 className="font-bold font-play mb-4">Account Details</h2>
-      <div className="grid grid-cols-[100px_1fr] gap-y-2 text-sm text-gray-300">
-        <span className="font-play md:text-lg flex items-center">Status</span>
-        <span className="flex items-center">
-          <span className="text-xs bg-[#072424] px-2 rounded-full p-1 text-[#09D8B9]">
+    <div>
+      <h2 className="font-bold font-play mb-3">Account Details</h2>
+
+      <div className="flex flex-col gap-3 text-sm text-gray-300">
+        {/* ROW: Status */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-play md:text-lg basis-[100px] shrink-0">
+            Status
+          </span>
+          <span className="text-xs bg-[#072424] px-2 py-1 rounded-full text-[#09D8B9]">
             {user ? "Authenticated" : "Not Authenticated"}
           </span>
-        </span>
+        </div>
 
-        <span className="font-play md:text-lg flex items-center">
-          Created on
-        </span>
-        <span className="flex items-center">{createdAt}</span>
+        {/* ROW: Created on */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-play md:text-lg basis-[100px] shrink-0">
+            Created on
+          </span>
+          <span className="text-gray-200">{createdAt}</span>
+        </div>
 
-        <span className="font-play md:text-lg flex items-center">Name</span>
-        <div className="flex items-center gap-2">
+        {/* ROW: Name (input + Save inline) */}
+        <div className="flex flex-wrap items-center gap-2">
+          <label
+            htmlFor="full_name"
+            className="font-play md:text-lg basis-[100px] shrink-0"
+          >
+            Name
+          </label>
+
           <input
+            id="full_name"
             type="text"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
-            className="bg-gray-800 text-white px-3 py-1 rounded-md outline-none border border-gray-700"
+            autoComplete="name"
+            className="min-w-0 flex-1 bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
+
           <button
+            type="button"
             onClick={updateName}
             disabled={loading}
-            className="bg-[#4F46E5] md:ml-4 mt-4 md:mt-0 hover:bg-purple-600 text-white px-3 py-1 rounded-md text-sm"
+            className="shrink-0 rounded-md bg-[#4F46E5] hover:bg-purple-600 px-3 py-1.5 text-sm text-white transition disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {loading ? "Updating..." : "Save"}
           </button>
         </div>
 
-        <span className="font-play md:text-lg flex items-center">Email</span>
-        <span className="flex items-center text-blue-400">
-          {user?.email || "Unknown"}
-        </span>
+        {/* ROW: Email */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-play md:text-lg basis-[100px] shrink-0">
+            Email
+          </span>
+          <span className="text-blue-400 break-words">
+            {user?.email || "Unknown"}
+          </span>
+        </div>
       </div>
     </div>
   );

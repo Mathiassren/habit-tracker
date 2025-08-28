@@ -1,38 +1,49 @@
-"use client"; // Ensures this runs on the client
+"use client";
 
 import { useAuth } from "@/hooks/useAuth";
-import { useState } from "react";
-import { Menu, X } from "lucide-react"; // Import icons for the menu
+import { useState, useEffect } from "react";
+import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+// If you want auto-close on route change, you can add:
+// import { usePathname } from "next/navigation";
 
 export default function Nav() {
   const { user, loginWithGoogle, logout } = useAuth();
-  const [isOpen, setIsOpen] = useState(false); // State for menu visibility
+  const [isOpen, setIsOpen] = useState(false);
+  const toggleMenu = () => setIsOpen((v) => !v);
 
-  const toggleMenu = () => setIsOpen(!isOpen); // Toggle menu function
+  // Optional: close on resize to md+ (prevents stale open state)
+  useEffect(() => {
+    const onResize = () => {
+      if (window.matchMedia("(min-width: 768px)").matches) setIsOpen(false);
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   return (
-    <nav className=" text-white p-4 border-b-[0.5px] border-gray-700">
+    <nav className="text-white p-4 border-b-[0.5px] border-gray-700">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
         {/* Logo */}
-        <Link href="/">
-          <div className="flex items-center ">
-            <Image
-              src="/habifyLogo3.png"
-              alt="Habify Logo"
-              width={100}
-              height={50}
-            />
-          </div>
+        <Link href="/" aria-label="Habify Home" className="flex items-center">
+          <Image
+            src="/habifyLogo3.png"
+            alt="Habify Logo"
+            width={50}
+            height={50}
+            priority
+          />
         </Link>
 
-        {/* If user is logged in, show the burger menu. Otherwise, show Login button */}
+        {/* Mobile: burger or login */}
         {user ? (
           <button
             onClick={toggleMenu}
             className="md:hidden p-2 rounded focus:outline-none focus:ring-2 focus:ring-gray-400"
             aria-label={isOpen ? "Close menu" : "Open menu"}
+            aria-expanded={isOpen}
+            aria-controls="mobile-menu"
           >
             {isOpen ? (
               <X
@@ -61,9 +72,10 @@ export default function Nav() {
         </div>
       </div>
 
-      {/* Mobile Menu (Dropdown) with Smooth Transition */}
+      {/* Mobile Menu */}
       {user && (
         <div
+          id="mobile-menu"
           className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
             isOpen
               ? "max-h-screen opacity-100 scale-100"
@@ -71,21 +83,41 @@ export default function Nav() {
           }`}
         >
           <ul className="flex flex-col space-y-2 text-4xl text-left pl-4 pt-4">
-            <Link href="/dashboard ">
-              <li className="hover:text-gray-300 cursor-pointer">Home</li>
-            </Link>
-            <Link href="/heatmap">
-              <li className="hover:text-gray-300 cursor-pointer">Dashboard</li>
-            </Link>
-            <Link href="/dailylog">
-              <li className="hover:text-gray-300 cursor-pointer">Daily Log</li>
-            </Link>
-            <Link href="/preferences">
-              <li className="hover:text-gray-300 cursor-pointer">
+            <li>
+              <Link
+                href="/dashboard"
+                className="hover:text-gray-300 cursor-pointer"
+              >
+                Home
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/heatmap"
+                className="hover:text-gray-300 cursor-pointer"
+              >
+                Dashboard
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/dailylog"
+                className="hover:text-gray-300 cursor-pointer"
+              >
+                Daily Log
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/preferences"
+                className="hover:text-gray-300 cursor-pointer"
+              >
                 Preferences
-              </li>
-            </Link>
+              </Link>
+            </li>
           </ul>
+
+          {/* Mobile user block (same design) */}
           <UserMenu user={user} logout={logout} mobile />
         </div>
       )}
@@ -93,38 +125,43 @@ export default function Nav() {
   );
 }
 
-/* Extracted User Menu Component */
+/* JSX version — no TypeScript annotations */
 function UserMenu({ user, logout, mobile = false }) {
   return (
-    <div className={`flex items-center space-x-3 ${mobile ? "flex-col" : ""}`}>
-      <div className="flex mt-6 items-center gap-4">
+    <div className="flex items-center space-x-3">
+      <div className="flex ml-4 items-center gap-2 mt-2">
         <img
-          src={user.user_metadata?.avatar_url || "/default.png"} // Prevent null error
+          src={user?.user_metadata?.avatar_url || "/default.png"}
           alt="User Avatar"
           className="w-10 h-10 rounded-xl"
         />
         <span className="text-sm font-bold">
           <span className="mr-2">Welcome</span>
           <span className="text-[#7158BD]">
-            {user.user_metadata?.full_name || "Guest"}
+            {user?.user_metadata?.full_name || "Guest"}
           </span>
         </span>
-        <Link href="/dailylog">
-          <p className="hover:text-white hidden md:block ease-in duration-100 text-gray-400">
-            Dailylog
-          </p>
+
+        {/* Desktop-only links as you had them */}
+        <Link
+          href="/dailylog"
+          className="hover:text-white hidden md:block ease-in duration-100 text-gray-400"
+        >
+          Dailylog
         </Link>
-        <Link href="/heatmap">
-          <p className="hover:text-white hidden md:block ease-in duration-100 text-gray-400">
-            Dashboard
-          </p>
+        <Link
+          href="/heatmap"
+          className="hover:text-white hidden md:block ease-in duration-100 text-gray-400"
+        >
+          Dashboard
         </Link>
-        <Link href="/preferences">
-          <p className="hover:text-white hidden md:block ease-in duration-100 text-gray-400">
-            Preferences
-          </p>
+        <Link
+          href="/preferences"
+          className="hover:text-white hidden md:block ease-in duration-100 text-gray-400"
+        >
+          Preferences
         </Link>
-        <a></a>
+
         <button
           type="button"
           onClick={logout}
