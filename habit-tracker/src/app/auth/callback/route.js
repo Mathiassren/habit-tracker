@@ -1,16 +1,15 @@
+// src/app/auth/callback/route.js
 import { NextResponse } from "next/server";
-import { createClient } from "../../../services/supabase/server";
+import { createRouteHandlerClient } from "../../../services/supabase/server";
 
 export async function GET(req) {
   const url = new URL(req.url);
   const code = url.searchParams.get("code");
-  const origin = url.origin;
+  const next = url.searchParams.get("next") || "/dashboard";
+  if (!code) return NextResponse.redirect(`${url.origin}/?auth=missing_code`);
 
-  if (!code) return NextResponse.redirect(`${origin}/?auth=missing_code`);
-
-  const supabase = createClient();
+  const supabase = await createRouteHandlerClient();
   const { error } = await supabase.auth.exchangeCodeForSession(code);
-  if (error) return NextResponse.redirect(`${origin}/?auth=error`);
-
-  return NextResponse.redirect(`${origin}/dashboard`);
+  if (error) return NextResponse.redirect(`${url.origin}/?auth=error`);
+  return NextResponse.redirect(`${url.origin}${next}`);
 }
