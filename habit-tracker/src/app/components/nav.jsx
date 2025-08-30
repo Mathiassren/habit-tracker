@@ -1,19 +1,44 @@
 "use client";
 
 import { useAuth } from "@/hooks/useAuth";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-// If you want auto-close on route change, you can add:
-// import { usePathname } from "next/navigation";
 
 export default function Nav() {
   const { user, loginWithGoogle, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const toggleMenu = () => setIsOpen((v) => !v);
 
-  // Optional: close on resize to md+ (prevents stale open state)
+  // NEW: refs for button + dropdown
+  const btnRef = useRef(null);
+  const menuRef = useRef(null);
+
+  // Close when clicking outside (or pressing ESC)
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const onPointer = (e) => {
+      const insideBtn = btnRef.current?.contains(e.target);
+      const insideMenu = menuRef.current?.contains(e.target);
+      if (!insideBtn && !insideMenu) setIsOpen(false);
+    };
+    const onEsc = (e) => {
+      if (e.key === "Escape") setIsOpen(false);
+    };
+
+    document.addEventListener("mousedown", onPointer);
+    document.addEventListener("touchstart", onPointer, { passive: true });
+    document.addEventListener("keydown", onEsc);
+    return () => {
+      document.removeEventListener("mousedown", onPointer);
+      document.removeEventListener("touchstart", onPointer);
+      document.removeEventListener("keydown", onEsc);
+    };
+  }, [isOpen]);
+
+  // Close on resize to md+ (unchanged)
   useEffect(() => {
     const onResize = () => {
       if (window.matchMedia("(min-width: 768px)").matches) setIsOpen(false);
@@ -39,6 +64,7 @@ export default function Nav() {
         {/* Mobile: burger or login */}
         {user ? (
           <button
+            ref={btnRef}
             onClick={toggleMenu}
             className="md:hidden p-2 rounded focus:outline-none focus:ring-2 focus:ring-gray-400"
             aria-label={isOpen ? "Close menu" : "Open menu"}
@@ -75,6 +101,7 @@ export default function Nav() {
       {/* Mobile Menu */}
       {user && (
         <div
+          ref={menuRef}
           id="mobile-menu"
           className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
             isOpen
@@ -87,6 +114,7 @@ export default function Nav() {
               <Link
                 href="/dashboard"
                 className="hover:text-gray-300 cursor-pointer"
+                onClick={() => setIsOpen(false)}
               >
                 Home
               </Link>
@@ -95,6 +123,7 @@ export default function Nav() {
               <Link
                 href="/heatmap"
                 className="hover:text-gray-300 cursor-pointer"
+                onClick={() => setIsOpen(false)}
               >
                 Dashboard
               </Link>
@@ -103,6 +132,7 @@ export default function Nav() {
               <Link
                 href="/dailylog"
                 className="hover:text-gray-300 cursor-pointer"
+                onClick={() => setIsOpen(false)}
               >
                 Daily Log
               </Link>
@@ -111,6 +141,7 @@ export default function Nav() {
               <Link
                 href="/preferences"
                 className="hover:text-gray-300 cursor-pointer"
+                onClick={() => setIsOpen(false)}
               >
                 Preferences
               </Link>
@@ -134,6 +165,7 @@ function UserMenu({ user, logout, mobile = false }) {
           src={user?.user_metadata?.avatar_url || "/default.png"}
           alt="User Avatar"
           className="w-10 h-10 rounded-xl"
+          referrerPolicy="no-referrer"
         />
         <span className="text-sm font-bold">
           <span className="mr-2">Welcome</span>
@@ -167,7 +199,6 @@ function UserMenu({ user, logout, mobile = false }) {
         >
           Ai Coach
         </Link>
-
         <button
           type="button"
           onClick={logout}
