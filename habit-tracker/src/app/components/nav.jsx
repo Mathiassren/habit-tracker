@@ -53,7 +53,7 @@ export default function Nav() {
         {/* Logo */}
         <Link href="/" aria-label="Habify Home" className="flex items-center">
           <Image
-            src="/habifyLogo3.png"
+            src="/habifyLogo5.png"
             alt="Habify Logo"
             width={50}
             height={50}
