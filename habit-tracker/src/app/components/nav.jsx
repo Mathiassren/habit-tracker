@@ -146,6 +146,15 @@ export default function Nav() {
                 Preferences
               </Link>
             </li>
+            <li>
+              <Link
+                href="/workbench"
+                className="hover:text-gray-300 cursor-pointer"
+                onClick={() => setIsOpen(false)}
+              >
+                Ai Planner
+              </Link>
+            </li>
           </ul>
 
           {/* Mobile user block (same design) */}
