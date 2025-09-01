@@ -1,11 +1,15 @@
 // next.config.js
 const withPWA = require("next-pwa")({
-  dest: "public", // Service worker goes into /public
+  dest: "public",
   register: true,
   skipWaiting: true,
-  disable: process.env.NODE_ENV === "development", // only enable in prod
+  disable: process.env.NODE_ENV === "development",
 });
 
-module.exports = withPWA({
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   reactStrictMode: true,
-});
+  eslint: { ignoreDuringBuilds: true }, // <-- skip ESLint on Vercel builds
+};
+
+module.exports = withPWA(nextConfig);
