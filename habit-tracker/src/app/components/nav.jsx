@@ -194,7 +194,7 @@ function UserMenu({ user, logout, mobile = false }) {
           Preferences
         </Link>
         <Link
-          href="/ai"
+          href="/workbench"
           className="hover:text-white hidden md:block ease-in duration-100 text-gray-400"
         >
           Ai Coach

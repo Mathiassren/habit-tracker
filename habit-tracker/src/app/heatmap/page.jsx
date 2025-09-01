@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useHeatmap } from "@/hooks/useHeatmap";
 import HabitHeatmap from "@/app/components/HabitHeatmap";
-import HabitQuickComplete from "@/app/components/HabitQuickComplete";
+import ChatBox from "../components/ChatBox";
 
 export default function HeatmapPage() {
   const { user, loading } = useAuth();

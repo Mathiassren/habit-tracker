@@ -9,6 +9,7 @@ import {
   ChartBarIcon,
   DocumentChartBarIcon,
   AdjustmentsHorizontalIcon,
+  CpuChipIcon,
 } from "@heroicons/react/24/outline";
 import Lottie from "lottie-react";
 import dashboardAnim from "../../../public/animations/Space.json"; // <-- put JSON here
@@ -76,6 +77,11 @@ export default function Dashboard() {
             <AdjustmentsHorizontalIcon className="w-12 h-12 text-blue-400" />
           }
           label="Preferences"
+        />
+        <NavCard
+          href="/workbench"
+          icon={<CpuChipIcon className="w-12 h-12 text-orange-400" />}
+          label="AI Planner"
         />
       </section>
     </div>
