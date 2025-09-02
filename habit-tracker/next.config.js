@@ -4,12 +4,19 @@ const withPWA = require("next-pwa")({
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === "development",
+  workboxOptions: {
+    runtimeCaching: [
+      // Don't cache HTML navigations (critical for auth state)
+      {
+        urlPattern: ({ request }) => request.mode === "navigate",
+        handler: "NetworkOnly",
+      },
+      // Static assets can still be cached:
+      {
+        urlPattern: ({ request }) =>
+          ["style", "script", "image", "font"].includes(request.destination),
+        handler: "StaleWhileRevalidate",
+      },
+    ],
+  },
 });
-
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  reactStrictMode: true,
-  eslint: { ignoreDuringBuilds: true }, // <-- skip ESLint on Vercel builds
-};
-
-module.exports = withPWA(nextConfig);
