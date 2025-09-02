@@ -8,11 +8,30 @@ export default function TaskCard({
 }) {
   const [open, setOpen] = useState(false);
 
+  const priorityColors = {
+    low: {
+      bg: "bg-green-500/20",
+      text: "text-green-400",
+    },
+    medium: {
+      bg: "bg-amber-500/20",
+      text: "text-amber-400",
+      high: {
+        bg: "bg-red-500/20",
+        text: "text-red-400",
+      },
+    },
+  };
+
+  const colors = priorityColors[task.priority] || priorityColors.medium;
+
   return (
     <div className="rounded-2xl border border-gray-700 p-4 bg-black/30 shadow hover:shadow-md transition">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-sm uppercase tracking-wide opacity-70">
+          <div
+            className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${colors.bg} ${colors.text}`}
+          >
             {task.priority}
           </div>
           <h3 className="text-lg font-semibold">{task.title}</h3>

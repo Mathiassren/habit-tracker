@@ -4,6 +4,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/services/supabase/browser";
 import TaskCard from "../components/TaskCard"; // your existing card component
+import Lottie from "lottie-react";
+import LoadingMini from "../../../public/animations/LoadingMini.json";
 
 export default function TaskBoard() {
   const [input, setInput] = useState("");
@@ -134,7 +136,7 @@ export default function TaskBoard() {
         <div className="flex gap-2">
           <input
             className="flex-1 border rounded px-3 py-2 bg-black/30"
-            placeholder="e.g., Build responsive Nav with outside-click + tests by Friday"
+            placeholder="Write your task here.."
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => (e.key === "Enter" ? createCard() : undefined)}
@@ -144,7 +146,11 @@ export default function TaskBoard() {
             disabled={creating || !userId}
             onClick={createCard}
           >
-            {creating ? "Thinking…" : "Create"}
+            {creating ? (
+              <Lottie animationData={LoadingMini} className="w-10 h-10" loop />
+            ) : (
+              "Create"
+            )}
           </button>
         </div>
         {!userId && (
