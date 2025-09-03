@@ -16,28 +16,30 @@ export async function middleware(req) {
           res.cookies.set({
             name,
             value,
-            path: "/",
-            sameSite: "lax",
-            secure: isProd,
             ...options,
+            httpOnly: true,
+            sameSite: "lax",
+            secure: isProd, // secure only in prod (https)
+            path: "/",
           });
         },
         remove: (name, options) => {
           res.cookies.set({
             name,
             value: "",
-            path: "/",
+            ...options,
+            httpOnly: true,
             sameSite: "lax",
             secure: isProd,
-            maxAge: 0,
-            ...options,
+            path: "/",
+            expires: new Date(0),
           });
         },
       },
     }
   );
 
-  // Triggers silent refresh if needed and syncs cookies
+  // Ensures tokens/cookies are kept in sync on navigation
   await supabase.auth.getUser();
 
   return res;
