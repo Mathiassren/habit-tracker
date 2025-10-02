@@ -23,8 +23,7 @@ export const metadata = {
   description: "Track your habits with Habify",
 };
 export const viewport = { 
-  themeColor: "#0a0a0a",
-  colorScheme: "dark"
+  themeColor: "#0a0a0a"
 };
 
 export default async function RootLayout({ children }) {
@@ -34,9 +33,9 @@ export default async function RootLayout({ children }) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${play.variable} dark`}
+      className={`${geistSans.variable} ${geistMono.variable} ${play.variable}`}
     >
-      <body className="antialiased bg-gray-950 text-white">
+      <body className="antialiased">
         <MantineProvider withGlobalStyles withNormalizeCSS>
           <ClientRoot user={user}>{children}</ClientRoot>
         </MantineProvider>

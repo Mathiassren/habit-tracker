@@ -117,7 +117,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-[#0b0b0f] text-white flex flex-col items-center justify-center px-6">
+    <div className="min-h-screen w-full bg-gray-950 dark:bg-gray-950 bg-white dark:text-white text-gray-900 flex flex-col items-center justify-center px-6">
       {/* Title */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}

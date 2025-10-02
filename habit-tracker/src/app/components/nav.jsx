@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import { Menu, X, Home, BarChart3, Calendar, Settings, Brain, BookOpen } from "lucide-react";
 import Link from "next/link";
 import Logo from "./Logo";
+import ThemeToggle from "./ThemeToggle";
 
 export default function Nav() {
   const { user, loginWithGoogle, logout } = useAuth();
@@ -73,6 +74,7 @@ export default function Nav() {
               
               {/* User Menu */}
               <div className="flex items-center gap-4 ml-4 pl-4 border-l border-gray-700">
+                <ThemeToggle />
                 <img
                   src={user?.user_metadata?.avatar_url || "/default-avatar.png"}
                   alt="Profile"
@@ -160,19 +162,22 @@ export default function Nav() {
               
               {/* Mobile User Section */}
               <div className="border-t border-gray-700 pt-4 mt-4">
-                <div className="flex items-center gap-3 mb-4">
-                  <img
-                    src={user?.user_metadata?.avatar_url || "/default-avatar.png"}
-                    alt="Profile"
-                    className="w-10 h-10 rounded-full"
-                    referrerPolicy="no-referrer"
-                  />
-                  <div>
-                    <p className="text-white text-sm">
-                      {user?.user_metadata?.full_name || "User"}
-                    </p>
-                    <p className="text-gray-400 text-xs">{user?.email}</p>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={user?.user_metadata?.avatar_url || "/default-avatar.png"}
+                      alt="Profile"
+                      className="w-10 h-10 rounded-full"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div>
+                      <p className="text-white text-sm">
+                        {user?.user_metadata?.full_name || "User"}
+                      </p>
+                      <p className="text-gray-400 text-xs">{user?.email}</p>
+                    </div>
                   </div>
+                  <ThemeToggle />
                 </div>
                 <button
                   onClick={logout}

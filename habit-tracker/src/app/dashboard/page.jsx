@@ -71,8 +71,8 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="text-white text-lg">Loading...</div>
+      <div className="min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center">
+        <div className="text-gray-900 dark:text-white text-lg">Loading...</div>
       </div>
     );
   }
@@ -80,7 +80,7 @@ export default function Dashboard() {
   if (!user) return null;
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-start bg-gray-950 overflow-hidden">
+    <div className="relative min-h-screen flex flex-col items-center justify-start bg-white dark:bg-gray-950 overflow-hidden">
       {/* Animated background */}
       <div className="absolute inset-0 opacity-30">
         <Lottie
