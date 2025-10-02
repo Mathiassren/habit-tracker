@@ -33,7 +33,7 @@ export default function HeatmapPage() {
         Welcome, {user?.user_metadata?.full_name?.split(" ")[0] || "Guest"}!
       </h2>
 
-      <HabitHeatmap className="p-0" byDate={byDate} />
+      <HabitHeatmap className="p-0" byDate={byDate} userId={user?.id} />
     </div>
   );
 }

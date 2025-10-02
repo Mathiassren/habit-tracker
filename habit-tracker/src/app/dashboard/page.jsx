@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import Link from "next/link";
 import {
   HomeIcon,
@@ -12,11 +12,55 @@ import {
   CpuChipIcon,
 } from "@heroicons/react/24/outline";
 import Lottie from "lottie-react";
-import dashboardAnim from "../../../public/animations/Space.json"; // <-- put JSON here
+import Logo from "../components/Logo";
+import dashboardAnim from "../../../public/animations/Space.json";
+
+const navigationCards = [
+  {
+    href: "/",
+    icon: HomeIcon,
+    label: "Home",
+    color: "text-purple-400",
+    description: "Return to main page"
+  },
+  {
+    href: "/heatmap",
+    icon: ChartBarIcon,
+    label: "Analytics",
+    color: "text-pink-400",
+    description: "View your progress"
+  },
+  {
+    href: "/dailylog",
+    icon: DocumentChartBarIcon,
+    label: "Daily Log",
+    color: "text-emerald-400",
+    description: "Track daily habits"
+  },
+  {
+    href: "/preferences",
+    icon: AdjustmentsHorizontalIcon,
+    label: "Preferences",
+    color: "text-blue-400",
+    description: "Customize settings"
+  },
+  {
+    href: "/workbench",
+    icon: CpuChipIcon,
+    label: "AI Planner",
+    color: "text-orange-400",
+    description: "Smart planning tools"
+  },
+];
 
 export default function Dashboard() {
   const { user, loading } = useAuth();
   const router = useRouter();
+
+  const userName = useMemo(() => 
+    user?.user_metadata?.full_name?.split(" ")[0] || "friend",
+    [user]
+  );
 
   // Protect route
   useEffect(() => {
@@ -25,76 +69,74 @@ export default function Dashboard() {
     }
   }, [user, loading, router]);
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="text-white text-lg">Loading...</div>
+      </div>
+    );
+  }
+  
   if (!user) return null;
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-start bg-gray-950 overflow-hidden">
-      {/* Subtle animated background */}
-      <div className="lottie-center-desktop">
+      {/* Animated background */}
+      <div className="absolute inset-0 opacity-30">
         <Lottie
-          className="w-full h-full"
+          className="w-full h-full object-cover"
           animationData={dashboardAnim}
           loop
           autoPlay
         />
       </div>
 
-      {/* Profile */}
-      <div className="relative z-10 flex flex-col items-center mt-16">
-        <img
-          src={user.user_metadata?.avatar_url || "/default-avatar.png"}
-          alt={user.user_metadata?.full_name || "User Avatar"}
-          className="w-24 h-24 rounded-full shadow-lg border-2 border-purple-500 object-cover"
-          referrerPolicy="no-referrer"
-        />
-        <h2 className="mt-6 text-3xl font-bold text-white drop-shadow">
-          Welcome, {user.user_metadata?.full_name || "friend"}!
-        </h2>
-        <p className="text-gray-300 mt-1">{user.email}</p>
-      </div>
+      {/* Content */}
+      <div className="relative z-10 w-full max-w-4xl px-6 py-16">
+        {/* Profile Section */}
+        <div className="flex flex-col items-center mb-16">
+          <div className="relative">
+            <img
+              src={user.user_metadata?.avatar_url || "/default-avatar.png"}
+              alt={`${userName}'s avatar`}
+              className="w-28 h-28 rounded-full shadow-2xl border-4 border-purple-500/50 object-cover"
+              referrerPolicy="no-referrer"
+            />
+            <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-500 rounded-full border-4 border-gray-950"></div>
+          </div>
+          
+          <h1 className="mt-6 text-4xl font-bold text-white drop-shadow-lg">
+            Welcome back, <span className="text-purple-400">{userName}</span>!
+          </h1>
+          <p className="text-gray-400 mt-2 text-lg">{user.email}</p>
+        </div>
 
-      {/* Navigation Grid */}
-      <section className="relative z-10 grid grid-cols-2 gap-6 mt-14">
-        <NavCard
-          href="/"
-          icon={<HomeIcon className="w-12 h-12 text-purple-400" />}
-          label="Home"
-        />
-        <NavCard
-          href="/heatmap"
-          icon={<ChartBarIcon className="w-12 h-12 text-pink-400" />}
-          label="Dashboard"
-        />
-        <NavCard
-          href="/dailylog"
-          icon={<DocumentChartBarIcon className="w-12 h-12 text-emerald-400" />}
-          label="Daily Log"
-        />
-        <NavCard
-          href="/preferences"
-          icon={
-            <AdjustmentsHorizontalIcon className="w-12 h-12 text-blue-400" />
-          }
-          label="Preferences"
-        />
-        <NavCard
-          href="/workbench"
-          icon={<CpuChipIcon className="w-12 h-12 text-orange-400" />}
-          label="AI Planner"
-        />
-      </section>
+        {/* Navigation Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {navigationCards.map((card) => (
+            <NavCard key={card.href} {...card} />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
 
-/* Reusable tile */
-function NavCard({ href, icon, label }) {
+function NavCard({ href, icon: Icon, label, color, description }) {
   return (
     <Link href={href} className="group">
-      <div className="bg-gray-800/70 backdrop-blur-md w-40 h-40 rounded-2xl flex flex-col items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-105 group-hover:bg-gray-700">
-        {icon}
-        <span className="text-white font-medium mt-2">{label}</span>
+      <div className="bg-gray-800/60 backdrop-blur-md border border-gray-700/50 rounded-2xl p-6 shadow-xl transition-all duration-300 group-hover:scale-105 group-hover:bg-gray-800/80 group-hover:border-purple-500/30 group-hover:shadow-2xl">
+        <div className="flex flex-col items-center text-center space-y-3">
+          <div className={`p-3 rounded-xl bg-gray-700/50 group-hover:bg-gray-600/50 transition-colors`}>
+            <Icon className={`w-8 h-8 ${color}`} />
+          </div>
+          <h3 className="text-white font-semibold text-lg group-hover:text-purple-300 transition-colors">
+            {label}
+          </h3>
+          <p className="text-gray-400 text-sm group-hover:text-gray-300 transition-colors">
+            {description}
+          </p>
+        </div>
       </div>
     </Link>
   );

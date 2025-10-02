@@ -22,6 +22,7 @@ export default function Home() {
   const [authError, setAuthError] = useState(null);
   const [infoMsg, setInfoMsg] = useState(null);
 
+
   // Load Lottie JSON from /public (so you can keep /public/animations/login.json)
   useEffect(() => {
     fetch("/animations/login.json")

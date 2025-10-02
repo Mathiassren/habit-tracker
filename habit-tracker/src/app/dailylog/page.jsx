@@ -28,26 +28,9 @@ import {
 } from "@dnd-kit/sortable";
 
 import SortableHabitItem from "@/app/components/SortableHabitItem";
+import { useCountUp } from "@/hooks/useCountUp";
 
 /* --------------------------- Utilities & helpers -------------------------- */
-
-function useCountUp(targetValue, duration = 500) {
-  const [value, setValue] = useState(0);
-  useEffect(() => {
-    let raf = 0;
-    const startValue = 0;
-    const startTime = performance.now();
-    const animate = (time) => {
-      const elapsed = time - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      setValue(startValue + (targetValue - startValue) * progress);
-      if (progress < 1) raf = requestAnimationFrame(animate);
-    };
-    raf = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(raf);
-  }, [targetValue, duration]);
-  return Math.round(value);
-}
 
 async function getUser() {
   const {
@@ -580,6 +563,7 @@ export default function DailylogPage() {
 
   return (
     <div className="min-h-screen text-white p-6 rounded-lg max-w-xl mx-auto relative">
+
       <DateNavigator
         selectedDate={selectedDate}
         onChange={setSelectedDate}

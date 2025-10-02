@@ -54,8 +54,8 @@ export default function ClientRoot({ children, user }) {
   return (
     <>
       {/* hydration-safe: render placeholder on SSR, real Nav after mount */}
-      <div suppressHydrationWarning>
-        {mounted ? <Nav initialUser={user} /> : <nav className="p-4" />}
+      <div suppressHydrationWarning style={{ position: 'relative', zIndex: 9999 }}>
+        {mounted ? <Nav /> : <nav className="p-4" />}
       </div>
       {children}
     </>

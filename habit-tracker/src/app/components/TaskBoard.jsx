@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/services/supabase/browser";
+import { supabase } from "@/services/supabase";
 import TaskCard from "../components/TaskCard"; // your existing card component
 import Lottie from "lottie-react";
 import LoadingMini from "../../../public/animations/LoadingMini.json";
