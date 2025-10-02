@@ -22,7 +22,10 @@ export const metadata = {
   title: "Habify",
   description: "Track your habits with Habify",
 };
-export const viewport = { themeColor: "#9333ea" };
+export const viewport = { 
+  themeColor: "#0a0a0a",
+  colorScheme: "dark"
+};
 
 export default async function RootLayout({ children }) {
   const supabase = await createRscClient(); // read-only client
@@ -31,9 +34,9 @@ export default async function RootLayout({ children }) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${play.variable}`}
+      className={`${geistSans.variable} ${geistMono.variable} ${play.variable} dark`}
     >
-      <body className="antialiased">
+      <body className="antialiased bg-gray-950 text-white">
         <MantineProvider withGlobalStyles withNormalizeCSS>
           <ClientRoot user={user}>{children}</ClientRoot>
         </MantineProvider>
