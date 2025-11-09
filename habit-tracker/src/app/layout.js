@@ -24,7 +24,8 @@ export const metadata = {
   description: "Track your habits with Habify",
 };
 export const viewport = { 
-  themeColor: "#0a0a0a"
+  themeColor: "#0a0a0a",
+  viewportFit: "cover"
 };
 
 export default async function RootLayout({ children }) {

@@ -42,8 +42,8 @@ export default function Nav() {
   }, [isOpen]);
 
   return (
-    <nav className="bg-gradient-to-r from-slate-900/95 via-slate-800/95 to-slate-900/95 backdrop-blur-xl border-b border-slate-700/50 shadow-2xl relative z-[9999] w-full" style={{ position: 'relative', zIndex: 9999 }}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
+    <nav className="bg-gradient-to-r from-slate-900/95 via-slate-800/95 to-slate-900/95 backdrop-blur-xl border-b border-slate-700/50 shadow-2xl relative z-[9999] w-full safe-area-nav" style={{ position: 'relative', zIndex: 9999 }}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-2 pb-3 sm:pt-3 sm:pb-4">
         <div className="flex justify-between items-center">
           {/* Logo */}
           <Link 
@@ -105,7 +105,7 @@ export default function Nav() {
           )}
 
           {/* Mobile Menu Button */}
-          {user ? (
+          {user && (
             <button
               onClick={toggleMenu}
               className="md:hidden w-10 h-10 flex items-center justify-center rounded-lg bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700/50 hover:border-indigo-500/50 text-gray-300 hover:text-white transition-all duration-300 relative group"
@@ -119,13 +119,6 @@ export default function Nav() {
                   <Menu size={20} className="rotate-0 transition-transform duration-300" />
                 )}
               </div>
-            </button>
-          ) : (
-            <button
-              onClick={loginWithGoogle}
-              className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white px-6 py-2 rounded-lg transition-colors shadow-lg shadow-indigo-500/30"
-            >
-              Login
             </button>
           )}
         </div>

@@ -19,16 +19,88 @@ export default function ResetPassword() {
   const [success, setSuccess] = useState(null);
 
   useEffect(() => {
-    // Check if we have a password reset token in the URL
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const accessToken = hashParams.get("access_token");
-    const type = hashParams.get("type");
+    // Check if we have a password reset token in the URL (hash or query params)
+    const checkResetToken = async () => {
+      // Check hash parameters (Supabase uses hash for password reset links)
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const accessToken = hashParams.get("access_token");
+      const type = hashParams.get("type");
+      const code = hashParams.get("code");
+      
+      // Check query parameters (fallback)
+      const queryParams = new URLSearchParams(window.location.search);
+      const queryToken = queryParams.get("access_token");
+      const queryType = queryParams.get("type");
+      const queryCode = queryParams.get("code");
 
-    if (accessToken && type === "recovery") {
-      setMode("reset");
-      // Clean up the URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
+      // Check if we already have a session (user clicked email link and Supabase set session)
+      let { data: { session } } = await supabase.auth.getSession();
+      
+      // If we have recovery tokens/code in URL, Supabase should process them automatically
+      const hasRecoveryToken = (accessToken && type === "recovery") || 
+                                (queryToken && queryType === "recovery") ||
+                                (code && type === "recovery") ||
+                                (queryCode && queryType === "recovery");
+      
+      if (hasRecoveryToken) {
+        // If we have tokens but no session yet, Supabase needs to process them
+        if (!session) {
+          // Try to exchange code for session if we have a code parameter
+          if (code || queryCode) {
+            try {
+              const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(
+                window.location.href
+              );
+              if (exchangeError) {
+                console.error("Error exchanging code:", exchangeError);
+                setError("Invalid or expired reset link. Please request a new password reset.");
+                return;
+              }
+              // Get session after exchange
+              const { data: { session: newSession } } = await supabase.auth.getSession();
+              session = newSession;
+            } catch (err) {
+              console.error("Error exchanging code:", err);
+              setError("Invalid or expired reset link. Please request a new password reset.");
+              return;
+            }
+          } else {
+            // If we have access_token directly, Supabase should have processed it
+            // Wait a moment for Supabase to establish session
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            const { data: { session: newSession } } = await supabase.auth.getSession();
+            session = newSession;
+            
+            // If still no session, listen for auth state changes
+            if (!session) {
+              const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+                if (event === 'PASSWORD_RECOVERY' || session) {
+                  setMode("reset");
+                  subscription.unsubscribe();
+                }
+              });
+              
+              // Clean up subscription after 5 seconds
+              setTimeout(() => subscription.unsubscribe(), 5000);
+              return;
+            }
+          }
+        }
+        
+        if (session) {
+          setMode("reset");
+          // Clean up the URL
+          const cleanUrl = window.location.pathname;
+          window.history.replaceState({}, document.title, cleanUrl);
+        }
+      } else if (session) {
+        // If we have a session but no tokens, check if it's from a password recovery
+        // This handles the case where Supabase already processed the tokens
+        setMode("reset");
+      }
+    };
+
+    checkResetToken();
   }, []);
 
   async function handleRequestReset(e) {
@@ -85,13 +157,40 @@ export default function ResetPassword() {
     }
 
     try {
+      // First, check if we have a session (required for password update)
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        // If no session, try to get it from URL tokens
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const queryParams = new URLSearchParams(window.location.search);
+        
+        // Supabase should have already set the session when the page loaded with the reset token
+        // But if not, we need to wait for it or show an error
+        const { data: { session: newSession }, error: newSessionError } = await supabase.auth.getSession();
+        
+        if (newSessionError || !newSession) {
+          throw new Error("Invalid or expired reset link. Please request a new password reset.");
+        }
+      }
+
+      // Update password (requires an active session from the reset token)
       const { error } = await supabase.auth.updateUser({
         password: password,
       });
 
-      if (error) throw error;
+      if (error) {
+        // If error is about session, provide helpful message
+        if (error.message.includes("session") || error.message.includes("token")) {
+          throw new Error("Invalid or expired reset link. Please request a new password reset.");
+        }
+        throw error;
+      }
 
       setSuccess("Password updated successfully! Redirecting to login...");
+      
+      // Sign out after password reset (security best practice)
+      await supabase.auth.signOut();
       
       // Redirect to login after a short delay
       setTimeout(() => {
@@ -105,7 +204,7 @@ export default function ResetPassword() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-slate-950 via-indigo-950/20 to-slate-950 flex flex-col items-center justify-center px-6 relative overflow-hidden">
+    <div className="min-h-screen w-full bg-gradient-to-br from-slate-950 via-indigo-950/20 to-slate-950 flex flex-col items-center justify-center px-6 relative overflow-hidden" style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,_rgba(99,102,241,0.15)_1px,_transparent_0)] bg-[size:24px_24px] opacity-40"></div>
       <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/10 via-transparent to-cyan-900/10"></div>

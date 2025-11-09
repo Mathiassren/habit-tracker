@@ -91,6 +91,26 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Safe area support for mobile navbar */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .safe-area-nav {
+    padding-top: max(env(safe-area-inset-top), 12px);
+  }
+}
+
+@supports not (padding-top: env(safe-area-inset-top)) {
+  .safe-area-nav {
+    padding-top: 12px;
+  }
+}
+
+/* Extra spacing on mobile devices */
+@media (max-width: 640px) {
+  .safe-area-nav {
+    padding-top: max(env(safe-area-inset-top), 16px) !important;
+  }
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
