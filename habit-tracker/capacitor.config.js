@@ -7,7 +7,7 @@ const config = {
     // This makes the app load your web app from the server (hybrid approach)
     // For local development: url: 'http://localhost:3000'
     // For production: url: 'https://your-actual-app.vercel.app'
-    url: process.env.CAPACITOR_SERVER_URL || 'https://habit-tracker-eight-omega.vercel.app/',
+   url: process.env.CAPACITOR_SERVER_URL || 'https://habify1-5lwwsyfgu-mathiassrens-projects.vercel.app/',
     cleartext: true,
     androidScheme: 'https'
   },
