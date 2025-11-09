@@ -111,7 +111,7 @@ export default function ResetPassword() {
               }
             } else {
               // If still no session after 3 seconds, show error
-              setTimeout(() => {
+              setTimeout(async () => {
                 const { data: { session: finalSession } } = await supabase.auth.getSession();
                 if (!finalSession) {
                   setError("Could not verify reset link. Please request a new password reset.");
