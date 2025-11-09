@@ -1,0 +1,7 @@
+{
+  "buildCommand": "cd habit-tracker && npm run build",
+  "outputDirectory": "habit-tracker/.next",
+  "installCommand": "cd habit-tracker && npm install",
+  "framework": null
+}
+
