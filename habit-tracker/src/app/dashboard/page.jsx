@@ -2,17 +2,15 @@
 
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import Link from "next/link";
 import {
   HomeIcon,
   ChartBarIcon,
   DocumentChartBarIcon,
   AdjustmentsHorizontalIcon,
-  CpuChipIcon,
-  SparklesIcon,
+  BookOpenIcon,
 } from "@heroicons/react/24/outline";
-import { supabase } from "@/services/supabase";
 
 const navigationCards = [
   {
@@ -23,18 +21,25 @@ const navigationCards = [
     description: "Return to main page"
   },
   {
-    href: "/heatmap",
-    icon: ChartBarIcon,
-    label: "Analytics",
-    gradient: "from-blue-500 to-cyan-500",
-    description: "View your progress"
-  },
-  {
     href: "/dailylog",
     icon: DocumentChartBarIcon,
     label: "Daily Log",
     gradient: "from-cyan-500 to-emerald-500",
     description: "Track daily habits"
+  },
+  {
+    href: "/journal",
+    icon: BookOpenIcon,
+    label: "Journal",
+    gradient: "from-emerald-500 to-teal-500",
+    description: "Capture your thoughts"
+  },
+  {
+    href: "/heatmap",
+    icon: ChartBarIcon,
+    label: "Analytics",
+    gradient: "from-blue-500 to-cyan-500",
+    description: "View your progress"
   },
   {
     href: "/preferences",
@@ -43,86 +48,16 @@ const navigationCards = [
     gradient: "from-indigo-500 to-purple-500",
     description: "Customize settings"
   },
-  {
-    href: "/workbench",
-    icon: CpuChipIcon,
-    label: "AI Planner",
-    gradient: "from-purple-500 to-pink-500",
-    description: "Smart planning tools"
-  },
 ];
 
 export default function Dashboard() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [stats, setStats] = useState({
-    totalHabits: 0,
-    totalCompletions: 0,
-    currentStreak: 0,
-  });
-  const [loadingStats, setLoadingStats] = useState(true);
 
   const userName = useMemo(() => 
     user?.user_metadata?.full_name?.split(" ")[0] || "friend",
     [user]
   );
-
-  // Fetch quick stats
-  useEffect(() => {
-    if (!user) return;
-    
-    const fetchStats = async () => {
-      try {
-        const [
-          { count: habitsCount } = { count: 0 },
-          { count: completionsCount } = { count: 0 },
-        ] = await Promise.all([
-          supabase.from("habits").select("*", { count: "exact", head: true }).eq("user_id", user.id),
-          supabase.from("habit_completions").select("*", { count: "exact", head: true }).eq("user_id", user.id),
-        ]);
-
-        // Simple streak calculation
-        const today = new Date().toLocaleDateString("en-CA");
-        const { data: recentCompletions } = await supabase
-          .from("habit_completions")
-          .select("completed_on, completed_at")
-          .eq("user_id", user.id)
-          .order("completed_at", { ascending: false })
-          .limit(30);
-
-        let streak = 0;
-        const dates = new Set();
-        recentCompletions?.forEach((c) => {
-          const dateStr = c.completed_on || new Date(c.completed_at).toLocaleDateString("en-CA");
-          dates.add(dateStr);
-        });
-
-        const sortedDates = Array.from(dates).sort().reverse();
-        let checkDate = new Date();
-        for (let i = 0; i < sortedDates.length; i++) {
-          const checkStr = checkDate.toLocaleDateString("en-CA");
-          if (sortedDates.includes(checkStr)) {
-            if (i === 0) streak++;
-          } else {
-            if (i === 0) break;
-          }
-          checkDate.setDate(checkDate.getDate() - 1);
-        }
-
-        setStats({
-          totalHabits: habitsCount || 0,
-          totalCompletions: completionsCount || 0,
-          currentStreak: streak,
-        });
-      } catch (error) {
-        console.error("Error fetching stats:", error);
-      } finally {
-        setLoadingStats(false);
-      }
-    };
-
-    fetchStats();
-  }, [user]);
 
   // Protect route
   useEffect(() => {
@@ -172,47 +107,6 @@ export default function Dashboard() {
           </h1>
           <p className="text-slate-400 text-lg">{user.email}</p>
         </div>
-
-        {/* Quick Stats */}
-        {!loadingStats && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
-            <div className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-800/40 backdrop-blur-xl rounded-xl border border-slate-700/50 p-6 shadow-lg shadow-indigo-900/20">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-lg bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30">
-                  <SparklesIcon className="w-6 h-6 text-indigo-400" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-white">{stats.totalHabits}</p>
-                  <p className="text-xs text-slate-400 uppercase tracking-wider">Total Habits</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-800/40 backdrop-blur-xl rounded-xl border border-slate-700/50 p-6 shadow-lg shadow-indigo-900/20">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-lg bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">
-                  <ChartBarIcon className="w-6 h-6 text-emerald-400" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-white">{stats.totalCompletions}</p>
-                  <p className="text-xs text-slate-400 uppercase tracking-wider">Completions</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-800/40 backdrop-blur-xl rounded-xl border border-slate-700/50 p-6 shadow-lg shadow-indigo-900/20">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-lg bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30">
-                  <SparklesIcon className="w-6 h-6 text-cyan-400" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-white">{stats.currentStreak}</p>
-                  <p className="text-xs text-slate-400 uppercase tracking-wider">Day Streak</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Navigation Grid */}
         <div>

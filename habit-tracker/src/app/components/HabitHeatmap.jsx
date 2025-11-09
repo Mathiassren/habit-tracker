@@ -65,10 +65,32 @@ export default function HabitHeatmap({
 
   // Handle heat field click
   const handleHeatFieldClick = async (value) => {
-    if (value && value.date) {
-      setSelectedDate(value.date);
-      await fetchHabitDetails(value.date);
+    if (!value) return;
+    
+    // Handle different value formats from react-activity-calendar
+    const dateStr = value.date || value;
+    
+    if (!dateStr) {
+      console.warn("No date found in click value:", value);
+      return;
     }
+    
+    // Ensure date is in YYYY-MM-DD format
+    let formattedDate = dateStr;
+    if (dateStr instanceof Date) {
+      formattedDate = toISO(dateStr);
+    } else if (typeof dateStr === 'string') {
+      // If it's already in ISO format, use it; otherwise try to parse
+      if (!dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        const parsed = new Date(dateStr);
+        if (!isNaN(parsed.getTime())) {
+          formattedDate = toISO(parsed);
+        }
+      }
+    }
+    
+    setSelectedDate(formattedDate);
+    await fetchHabitDetails(formattedDate);
   };
 
   // Close modal
@@ -83,11 +105,14 @@ export default function HabitHeatmap({
     const year = today.getFullYear();
     const start = new Date(year, 0, 1);
     start.setHours(0, 0, 0, 0);
-    const end = new Date(year, 11, 31);
+    // Use end of year for proper calendar display
+    const endOfYear = new Date(year, 11, 31);
+    endOfYear.setHours(23, 59, 59, 999);
 
-    // Build continuous range Jan 1 -> today (inclusive)
+    // Build continuous range Jan 1 -> end of year (inclusive) for full calendar display
+    // This ensures all squares are clickable
     const days = [];
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    for (let d = new Date(start); d <= endOfYear; d.setDate(d.getDate() + 1)) {
       days.push(toISO(d));
     }
 
@@ -110,84 +135,84 @@ export default function HabitHeatmap({
       return 4;
     };
 
-    const values =
-      days.length > 0
-        ? days.map((iso) => {
-            const c = Number(byDate?.[iso] ?? 0);
-            return { date: iso, count: c, level: levelFor(c) };
-          })
-        : [{ date: toISO(today), count: 0, level: 0 }];
+    // Include ALL dates (even future ones) so all squares are clickable
+    const values = days.map((iso) => {
+      const c = Number(byDate?.[iso] ?? 0);
+      return { date: iso, count: c, level: levelFor(c) };
+    });
 
     const sum = values.reduce((a, v) => a + (v.count || 0), 0);
 
     return {
       startISO: toISO(start),
-      endISO: toISO(end),
+      endISO: toISO(endOfYear),
       data: values,
       total: sum,
     };
   }, [byDate]);
 
   return (
-    <section className="select-none">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-2xl font-bold text-white">{title}</h3>
-        <div className="text-sm text-slate-400">
+    <section>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 mb-6">
+        <h3 className="text-xl sm:text-2xl font-bold text-white">{title}</h3>
+        <div className="text-xs sm:text-sm text-slate-400">
           Click any square to view details
         </div>
       </div>
-      <ActivityCalendar
-        data={data} // Jan 1 → today
-        startDate={startISO}
-        endDate={endISO}
-        weekStart={weekStart}
-        blockSize={14}
-        blockMargin={3}
-        fontSize={12}
-        colorScheme="dark"
-        hideTotalCount={false}
-        labels={{
-          legend: { less: "Less", more: "More" },
-          months: [
-            "Jan",
-            "Feb",
-            "Mar",
-            "Apr",
-            "May",
-            "Jun",
-            "Jul",
-            "Aug",
-            "Sep",
-            "Oct",
-            "Nov",
-            "Dec",
-          ],
-          totalCount: `${total} completions in {{year}}`,
-          weekDays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-        }}
-        theme={{
-          dark: ["#27272a", "#312e81", "#4338ca", "#6366f1", "#818cf8"],
-          light: ["#27272a", "#312e81", "#4338ca", "#6366f1", "#818cf8"],
-        }}
-        tooltipDataAttrs={(val) => {
-          const date = new Date(val.date);
-          const formattedDate = date.toLocaleDateString('en-US', {
-            weekday: 'short',
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-          });
-          const tooltipText = `${formattedDate}: ${val.count} completion${
-            val.count === 1 ? "" : "s"
-          }`;
-          return {
-            "data-tip": tooltipText,
-            "title": tooltipText,
-          };
-        }}
-        showWeekdayLabels={false}
-        onClick={handleHeatFieldClick}
-      />
+      <div className="overflow-x-auto -mx-2 px-2" style={{ cursor: 'pointer' }}>
+        <ActivityCalendar
+          data={data} // Jan 1 → Dec 31 (all dates included for clickability)
+          startDate={startISO}
+          endDate={endISO}
+          weekStart={weekStart}
+          blockSize={12}
+          blockMargin={4}
+          fontSize={11}
+          colorScheme="dark"
+          hideTotalCount={false}
+          labels={{
+            legend: { less: "Less", more: "More" },
+            months: [
+              "Jan",
+              "Feb",
+              "Mar",
+              "Apr",
+              "May",
+              "Jun",
+              "Jul",
+              "Aug",
+              "Sep",
+              "Oct",
+              "Nov",
+              "Dec",
+            ],
+            totalCount: `${total} completion${total === 1 ? '' : 's'} in {{year}}`,
+            weekDays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+          }}
+          theme={{
+            dark: ["#27272a", "#312e81", "#4338ca", "#6366f1", "#818cf8"],
+            light: ["#27272a", "#312e81", "#4338ca", "#6366f1", "#818cf8"],
+          }}
+          tooltipDataAttrs={(val) => {
+            const date = new Date(val.date);
+            const formattedDate = date.toLocaleDateString('en-US', {
+              weekday: 'short',
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric'
+            });
+            const tooltipText = `${formattedDate}: ${val.count} completion${
+              val.count === 1 ? "" : "s"
+            }`;
+            return {
+              "data-tip": tooltipText,
+              "title": tooltipText,
+            };
+          }}
+          showWeekdayLabels={false}
+          onClick={handleHeatFieldClick}
+        />
+      </div>
 
       {/* Habit Details Modal */}
       {selectedDate && (
@@ -251,7 +276,7 @@ export default function HabitHeatmap({
                           {completion.habits?.name || 'Unknown Habit'}
                         </h4>
                         <p className="text-slate-400 text-sm">
-                          Completed at {new Date(completion.completed_at).toLocaleTimeString('en-US', {
+                          Completed at {new Date(completion.completed_at).toLocaleTimeString(navigator.language || undefined, {
                             hour: '2-digit',
                             minute: '2-digit'
                           })}

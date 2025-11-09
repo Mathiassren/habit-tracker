@@ -264,7 +264,7 @@ export default function JournalPage() {
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
           {/* Main Writing Area */}
           <div className="xl:col-span-3">
-            <div className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-800/40 backdrop-blur-xl rounded-3xl border border-slate-700/50 shadow-2xl shadow-indigo-900/20 overflow-hidden">
+            <div data-main-editor className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-800/40 backdrop-blur-xl rounded-3xl border border-slate-700/50 shadow-2xl shadow-indigo-900/20 overflow-hidden">
               {/* Date Selector */}
               <div className="p-8 border-b border-white/10 bg-gradient-to-r from-indigo-600/10 via-blue-600/10 to-cyan-600/10">
                 <div className="flex items-center gap-4 flex-wrap">
@@ -366,14 +366,16 @@ export default function JournalPage() {
                 
                 {currentImageUrl ? (
                   <div className="relative group">
-                    <div className="relative w-full h-48 rounded-2xl overflow-hidden bg-gray-800">
+                    <div className="relative w-full min-h-48 max-h-96 rounded-2xl overflow-hidden bg-gray-800 flex items-center justify-center">
                       <Image
                         src={currentImageUrl}
                         alt="Journal image"
-                        fill
-                        className="object-cover"
+                        width={800}
+                        height={600}
+                        className="w-full h-auto max-h-96 object-contain rounded-2xl"
+                        unoptimized
                       />
-                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                       <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
                         <button
                           onClick={() => setShowImagePreview(true)}
@@ -494,7 +496,8 @@ export default function JournalPage() {
                   {entries.slice(0, 5).map((entry) => (
                     <div
                       key={entry.id}
-                      className={`p-4 rounded-xl border transition-all group ${
+                      onClick={() => openReadOnlyModal(entry)}
+                      className={`p-4 rounded-xl border transition-all group cursor-pointer ${
                         entry.date === selectedDate
                           ? "bg-indigo-500/20 border-indigo-500/50 shadow-lg shadow-indigo-500/20"
                           : "bg-slate-700/20 border-slate-600/30 hover:bg-slate-700/30 hover:border-slate-500/50"
@@ -509,7 +512,10 @@ export default function JournalPage() {
                             <ImageIcon className="w-4 h-4 text-indigo-400" />
                           )}
                           <button
-                            onClick={() => openReadOnlyModal(entry)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openReadOnlyModal(entry);
+                            }}
                             className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-white/10 rounded-lg"
                             title="View Entry"
                           >
@@ -537,7 +543,17 @@ export default function JournalPage() {
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
                           <button
-                            onClick={() => setSelectedDate(entry.date)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedDate(entry.date);
+                              // Scroll to the main editing area
+                              setTimeout(() => {
+                                const mainArea = document.querySelector('[data-main-editor]');
+                                if (mainArea) {
+                                  mainArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                }
+                              }, 100);
+                            }}
                             className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
                           >
                             Edit
@@ -598,27 +614,30 @@ export default function JournalPage() {
 
         {/* Read-Only Entry Modal */}
         {showReadOnlyModal && selectedReadOnlyEntry && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white/5 backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+            <div className="bg-gradient-to-br from-slate-800/95 via-slate-800/90 to-slate-800/95 backdrop-blur-xl rounded-2xl border border-slate-700/50 shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
               {/* Modal Header */}
-              <div className="p-6 border-b border-white/10 bg-gradient-to-r from-indigo-600/10 to-blue-800/10">
+              <div className="p-6 border-b border-slate-700/50 bg-gradient-to-r from-indigo-600/10 via-blue-600/10 to-cyan-600/10">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-blue-800 flex items-center justify-center">
-                      <BookOpen className="w-5 h-5 text-white" />
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 via-blue-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-indigo-500/50">
+                      <BookOpen className="w-6 h-6 text-white" />
                     </div>
                     <div>
                       <h3 className="text-xl font-bold text-white">
                         {dayjs(selectedReadOnlyEntry.date).format("dddd, MMMM D, YYYY")}
                       </h3>
-                      <p className="text-gray-400 text-sm">
-                        {dayjs(selectedReadOnlyEntry.updated_at).format("h:mm A")}
+                      <p className="text-slate-400 text-sm mt-1">
+                        Updated at {new Date(selectedReadOnlyEntry.updated_at).toLocaleTimeString(navigator.language || undefined, {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
                       </p>
                     </div>
                   </div>
                   <button
                     onClick={closeReadOnlyModal}
-                    className="p-2 bg-gray-800/50 rounded-xl text-gray-400 hover:text-white hover:bg-gray-700/50 transition-colors"
+                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-700/50 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors border border-slate-600/50"
                   >
                     <X size={20} />
                   </button>
@@ -626,40 +645,47 @@ export default function JournalPage() {
               </div>
 
               {/* Modal Content */}
-              <div className="p-6 max-h-96 overflow-y-auto">
+              <div className="flex-1 overflow-y-auto p-6">
                 {selectedReadOnlyEntry.image_url && (
                   <div className="mb-6">
-                    <div className="relative w-full h-64 rounded-2xl overflow-hidden bg-gray-800">
-                      <Image
-                        src={selectedReadOnlyEntry.image_url}
-                        alt={selectedReadOnlyEntry.image_alt || "Journal image"}
-                        fill
-                        className="object-cover"
-                      />
+                    <div className="relative w-full rounded-2xl overflow-hidden bg-slate-800/50 border border-slate-700/50 p-4">
+                      <div className="relative w-full min-h-64 max-h-[500px] rounded-xl overflow-hidden bg-slate-900/50 flex items-center justify-center">
+                        <Image
+                          src={selectedReadOnlyEntry.image_url}
+                          alt={selectedReadOnlyEntry.image_alt || "Journal image"}
+                          width={800}
+                          height={600}
+                          className="w-full h-auto max-h-[500px] object-contain rounded-xl"
+                          unoptimized
+                        />
+                      </div>
                     </div>
                   </div>
                 )}
                 
-                <div className="prose prose-invert max-w-none">
-                  <div className="text-white text-lg leading-relaxed whitespace-pre-wrap">
-                    {selectedReadOnlyEntry.content}
+                <div className="bg-slate-800/30 rounded-xl border border-slate-700/50 p-6">
+                  <div className="text-white text-base sm:text-lg leading-relaxed whitespace-pre-wrap">
+                    {selectedReadOnlyEntry.content || <span className="text-slate-400 italic">No content</span>}
                   </div>
                 </div>
               </div>
 
               {/* Modal Footer */}
-              <div className="p-6 border-t border-white/10 bg-gray-800/30">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-2 text-sm text-gray-400">
-                    <span>{selectedReadOnlyEntry.content.length} characters</span>
+              <div className="p-6 border-t border-slate-700/50 bg-slate-800/30">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3 text-sm text-slate-400">
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-700/50 rounded-lg border border-slate-600/50">
+                      <span className="text-slate-300 font-medium">{selectedReadOnlyEntry.content.length}</span>
+                      <span className="text-slate-500">characters</span>
+                    </div>
                     {selectedReadOnlyEntry.image_url && (
-                      <>
-                        <span>•</span>
-                        <span>With image</span>
-                      </>
+                      <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-500/20 rounded-lg border border-indigo-500/30">
+                        <ImageIcon className="w-4 h-4 text-indigo-400" />
+                        <span className="text-indigo-400 font-medium">With image</span>
+                      </div>
                     )}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3 w-full sm:w-auto">
                     <button
                       onClick={() => {
                         if (confirm("Are you sure you want to delete this journal entry? This action cannot be undone.")) {
@@ -667,20 +693,27 @@ export default function JournalPage() {
                           closeReadOnlyModal();
                         }
                       }}
-                      className="px-4 py-2 bg-red-500/20 text-red-400 rounded-xl hover:bg-red-500/30 transition-colors flex items-center gap-2 border border-red-500/30"
+                      className="flex-1 sm:flex-none px-4 py-2.5 bg-red-500/20 text-red-400 rounded-xl hover:bg-red-500/30 transition-colors flex items-center justify-center gap-2 border border-red-500/30 font-medium"
                     >
-                      <Trash2 size={16} />
-                      Delete
+                      <Trash2 size={18} />
+                      <span>Delete</span>
                     </button>
                     <button
                       onClick={() => {
                         setSelectedDate(selectedReadOnlyEntry.date);
                         closeReadOnlyModal();
+                        // Scroll to the main editing area
+                        setTimeout(() => {
+                          const mainArea = document.querySelector('[data-main-editor]');
+                          if (mainArea) {
+                            mainArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                          }
+                        }, 100);
                       }}
-                      className="px-4 py-2 bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 text-white rounded-xl hover:from-indigo-500 hover:via-blue-500 hover:to-cyan-500 transition-colors flex items-center gap-2 shadow-lg shadow-indigo-500/30"
+                      className="flex-1 sm:flex-none px-4 py-2.5 bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 hover:from-indigo-500 hover:via-blue-500 hover:to-cyan-500 text-white rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/30 font-medium"
                     >
-                      <Edit3 size={16} />
-                      Edit Entry
+                      <Edit3 size={18} />
+                      <span>Edit</span>
                     </button>
                   </div>
                 </div>

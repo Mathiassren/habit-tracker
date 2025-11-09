@@ -25,10 +25,49 @@ const ManageTab = ({ user, setUser }) => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  // keep local fields in sync when parent user changes
+  // Load avatar from profiles table first (for custom uploads), then fall back to user_metadata
   useEffect(() => {
-    setFullName(user?.user_metadata?.full_name || "");
-    setAvatarUrl(user?.user_metadata?.avatar_url || "");
+    if (!user?.id) {
+      setAvatarUrl("");
+      setFullName("");
+      return;
+    }
+
+    // Load from profiles table first (prioritizes custom uploads)
+    (async () => {
+      try {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("avatar_url, full_name")
+          .eq("id", user.id)
+          .single();
+
+        // Use profile avatar if it exists and is a custom upload (Supabase storage)
+        // Otherwise fall back to user_metadata (Google OAuth)
+        const profileAvatar = profile?.avatar_url;
+        const metadataAvatar = user?.user_metadata?.avatar_url;
+        
+        if (profileAvatar && (profileAvatar.includes('supabase') || profileAvatar !== metadataAvatar)) {
+          setAvatarUrl(profileAvatar);
+          // Also update user_metadata to keep it in sync
+          if (metadataAvatar !== profileAvatar) {
+            await supabase.auth.updateUser({
+              data: { avatar_url: profileAvatar },
+            });
+          }
+        } else {
+          setAvatarUrl(metadataAvatar || "");
+        }
+
+        // Use profile full_name if available, otherwise user_metadata
+        setFullName(profile?.full_name || user?.user_metadata?.full_name || "");
+      } catch (error) {
+        console.error("Error loading profile:", error);
+        // Fallback to user_metadata
+        setAvatarUrl(user?.user_metadata?.avatar_url || "");
+        setFullName(user?.user_metadata?.full_name || "");
+      }
+    })();
   }, [user]);
 
   // --- ensure a default avatar for first-time users (runs once per user)
@@ -129,43 +168,75 @@ const ManageTab = ({ user, setUser }) => {
     const file = e.target.files?.[0];
     if (!user?.id || !file) return;
 
-    const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
-    const filePath = `avatars/${user.id}.${ext}`;
+    setSavingAvatar(true);
+    setMsg("");
 
-    const { error: upErr } = await supabase.storage
-      .from("avatars")
-      .upload(filePath, file, { upsert: true });
-    if (upErr) {
-      console.error(upErr);
-      return;
+    try {
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+      const filePath = `avatars/${user.id}.${ext}`;
+
+      // Upload to Supabase storage
+      const { error: upErr } = await supabase.storage
+        .from("avatars")
+        .upload(filePath, file, { upsert: true });
+      if (upErr) {
+        console.error("Upload error:", upErr);
+        setMsg("Failed to upload avatar. Please try again.");
+        return;
+      }
+
+      // Get public URL
+      const { data } = supabase.storage.from("avatars").getPublicUrl(filePath);
+      const publicUrl = data?.publicUrl
+        ? `${data.publicUrl}?v=${Date.now()}`
+        : "";
+      if (!publicUrl) {
+        setMsg("Failed to get avatar URL. Please try again.");
+        return;
+      }
+
+      // Save to profiles table FIRST (this is the source of truth for custom avatars)
+      const { error: profErr } = await supabase.from("profiles").upsert(
+        {
+          id: user.id,
+          avatar_url: publicUrl,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "id" }
+      );
+      if (profErr) {
+        console.error("Profile update error:", profErr);
+        setMsg("Failed to save avatar. Please try again.");
+        return;
+      }
+
+      // Update user_metadata to keep it in sync
+      const { error: authErr } = await supabase.auth.updateUser({
+        data: { avatar_url: publicUrl },
+      });
+      if (authErr) {
+        console.error("Auth update error:", authErr);
+        // Don't fail completely - profile table has the avatar
+      }
+
+      // Refresh session and update local state
+      await supabase.auth.refreshSession();
+      const { data: fresh } = await supabase.auth.getUser();
+      if (fresh?.user) {
+        setUser?.(fresh.user);
+      }
+      setAvatarUrl(publicUrl);
+      setMsg("Avatar uploaded successfully!");
+      
+      // Clear message after 3 seconds
+      setTimeout(() => setMsg(""), 3000);
+    } catch (error) {
+      console.error("Error uploading avatar:", error);
+      setMsg("Failed to upload avatar. Please try again.");
+    } finally {
+      setSavingAvatar(false);
+      e.target.value = "";
     }
-
-    const { data } = supabase.storage.from("avatars").getPublicUrl(filePath);
-    const publicUrl = data?.publicUrl
-      ? `${data.publicUrl}?v=${Date.now()}`
-      : "";
-    if (!publicUrl) return;
-
-    const { error: profErr } = await supabase.from("profiles").upsert(
-      {
-        id: user.id,
-        avatar_url: publicUrl,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "id" }
-    );
-    if (profErr) {
-      console.error(profErr);
-      return;
-    }
-
-    await supabase.auth.updateUser({ data: { avatar_url: publicUrl } });
-
-    await supabase.auth.refreshSession();
-    const { data: fresh } = await supabase.auth.getUser();
-    setUser?.(fresh.user);
-    setAvatarUrl(publicUrl);
-    e.target.value = "";
   };
 
   // --- Change Password (email users only)
@@ -209,18 +280,16 @@ const ManageTab = ({ user, setUser }) => {
         )}
 
         {/* Avatar Card */}
-        <div className="bg-slate-700/20 rounded-xl border border-slate-600/30 p-6 mb-6">
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-1">Profile Avatar</h3>
-              <p className="text-sm text-slate-400">
-                Change the way you appear on Habify
-              </p>
-            </div>
+        <div className="bg-slate-700/20 rounded-xl border border-slate-600/30 p-4 sm:p-6 mb-6">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-white mb-1">Profile Avatar</h3>
+            <p className="text-sm text-slate-400">
+              Change the way you appear on Habify
+            </p>
           </div>
 
-          <div className="flex items-center gap-6">
-            <div className="relative">
+          <div className="flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-6">
+            <div className="relative flex-shrink-0">
               <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-blue-500 to-cyan-500 rounded-full blur-lg opacity-30"></div>
               {avatarUrl ? (
                 <Image
@@ -228,11 +297,11 @@ const ManageTab = ({ user, setUser }) => {
                   alt="Avatar"
                   width={80}
                   height={80}
-                  className="relative rounded-full border-4 border-indigo-500/50 object-cover shadow-xl"
+                  className="relative rounded-full border-4 border-indigo-500/50 object-cover shadow-xl w-20 h-20"
                   unoptimized
                 />
               ) : (
-                <div className="relative w-20 h-20 rounded-full bg-slate-700 border-4 border-indigo-500/50 grid place-items-center overflow-hidden">
+                <div className="relative w-20 h-20 rounded-full bg-slate-700 border-4 border-indigo-500/50 grid place-items-center overflow-hidden shadow-xl">
                   <img
                     src={user?.user_metadata?.avatar_url || "/default-avatar.png"}
                     alt="User Avatar"
@@ -242,13 +311,13 @@ const ManageTab = ({ user, setUser }) => {
               )}
             </div>
 
-            <label className="flex-1 cursor-pointer">
+            <label className="flex-1 w-full cursor-pointer">
               <div className="border-2 border-dashed border-slate-600/50 hover:border-indigo-500/50 rounded-xl p-4 transition-all group">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30 group-hover:bg-indigo-500/30 transition-colors">
+                  <div className="w-10 h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30 group-hover:bg-indigo-500/30 transition-colors flex-shrink-0">
                     <UploadIcon className="w-5 h-5 text-indigo-400" />
                   </div>
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <p className="text-white font-medium group-hover:text-indigo-300 transition-colors">
                       {savingAvatar ? "Uploading..." : "Upload New Avatar"}
                     </p>
@@ -268,18 +337,16 @@ const ManageTab = ({ user, setUser }) => {
         </div>
 
         {/* Name Card */}
-        <div className="bg-slate-700/20 rounded-xl border border-slate-600/30 p-6">
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-1">Display Name</h3>
-              <p className="text-sm text-slate-400">
-                Change how your name appears on Habify
-              </p>
-            </div>
+        <div className="bg-slate-700/20 rounded-xl border border-slate-600/30 p-4 sm:p-6 mb-6">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-white mb-1">Display Name</h3>
+            <p className="text-sm text-slate-400">
+              Change how your name appears on Habify
+            </p>
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 hover:from-indigo-500 hover:via-blue-500 hover:to-cyan-500 text-white px-6 py-3 rounded-xl text-sm font-medium shadow-lg shadow-indigo-500/30 transition-all"
+            className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 hover:from-indigo-500 hover:via-blue-500 hover:to-cyan-500 text-white px-6 py-3 rounded-xl text-sm font-medium shadow-lg shadow-indigo-500/30 transition-all"
           >
             Edit Name
           </button>
@@ -339,7 +406,7 @@ const ManageTab = ({ user, setUser }) => {
       )}
 
         {/* Password Card */}
-        <div className="bg-slate-700/20 rounded-xl border border-slate-600/30 p-6">
+        <div className="bg-slate-700/20 rounded-xl border border-slate-600/30 p-4 sm:p-6">
           <h3 className="text-lg font-semibold text-white mb-1">Change Password</h3>
 
           {!hasEmailIdentity ? (

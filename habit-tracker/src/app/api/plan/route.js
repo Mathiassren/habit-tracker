@@ -5,7 +5,26 @@ const MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
 
 export async function POST(req) {
   try {
+    // Check if API key is configured
+    if (!process.env.OPENAI_API_KEY) {
+      console.error("OPENAI_API_KEY is not set in environment variables");
+      return Response.json(
+        { 
+          ok: false, 
+          error: "OpenAI API key is not configured. Please set OPENAI_API_KEY in your environment variables." 
+        },
+        { status: 500 }
+      );
+    }
+
     const { prompt } = await req.json();
+
+    if (!prompt || !prompt.trim()) {
+      return Response.json(
+        { ok: false, error: "Prompt is required" },
+        { status: 400 }
+      );
+    }
 
     const sys = `
 You turn a single human request into ONE actionable task card.
@@ -69,8 +88,17 @@ If info is missing, infer sensible defaults. Keep steps concrete and minimal.
     return Response.json({ ok: true, task: safe });
   } catch (e) {
     console.error("plan route error:", e);
+    
+    // Provide more specific error messages
+    let errorMessage = "Failed to create task plan.";
+    if (e?.status === 401 || e?.code === 'invalid_api_key') {
+      errorMessage = "Invalid OpenAI API key. Please check your OPENAI_API_KEY environment variable.";
+    } else if (e?.message) {
+      errorMessage = e.message;
+    }
+    
     return Response.json(
-      { ok: false, error: "Planning failed" },
+      { ok: false, error: errorMessage },
       { status: 500 }
     );
   }

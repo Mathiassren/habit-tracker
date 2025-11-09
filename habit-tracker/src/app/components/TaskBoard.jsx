@@ -62,18 +62,36 @@ export default function TaskBoard() {
   // Create card via your existing /api/plan, then INSERT into tasks
   async function createCard() {
     const text = input.trim();
-    if (!text || creating || !userId) return;
+    if (!text || creating || !userId) {
+      if (!userId) {
+        alert("Please log in to create tasks.");
+      }
+      return;
+    }
     setCreating(true);
     try {
-      const plan = await fetch("/api/plan", {
+      const response = await fetch("/api/plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: text }),
-      }).then((r) => r.json());
+      });
 
-      if (!plan?.ok) return alert("Could not create task.");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `API error: ${response.status} ${response.statusText}`);
+      }
+
+      const plan = await response.json();
+
+      if (!plan?.ok) {
+        throw new Error(plan.error || "Could not create task plan.");
+      }
 
       const t = plan.task;
+      if (!t) {
+        throw new Error("No task data returned from API.");
+      }
+
       const { data, error } = await supabase
         .from("tasks")
         .insert({
@@ -90,9 +108,20 @@ export default function TaskBoard() {
         .select()
         .single();
 
-      if (error) return alert(error.message);
+      if (error) {
+        console.error("Supabase insert error:", error);
+        throw new Error(error.message || "Failed to save task to database.");
+      }
+
+      if (!data) {
+        throw new Error("Task was created but no data was returned.");
+      }
+
       setCards((c) => [data, ...c]);
       setInput("");
+    } catch (error) {
+      console.error("Error creating task:", error);
+      alert(error.message || "Failed to create task. Please try again.");
     } finally {
       setCreating(false);
     }
@@ -145,21 +174,21 @@ export default function TaskBoard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Create Task Card */}
-      <div className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-800/40 backdrop-blur-xl rounded-2xl border border-slate-700/50 shadow-2xl shadow-indigo-900/20 p-6">
+      <div className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-800/40 backdrop-blur-xl rounded-2xl border border-slate-700/50 shadow-2xl shadow-indigo-900/20 p-4 sm:p-6">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-blue-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-indigo-500/50">
-            <span className="text-white text-xl">✨</span>
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-blue-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-indigo-500/50 flex-shrink-0">
+            <span className="text-white text-lg sm:text-xl">✨</span>
           </div>
-          <div>
-            <h2 className="text-xl font-bold text-white">Create New Task</h2>
-            <p className="text-sm text-slate-400">Let AI help you plan your work</p>
+          <div className="flex-1 min-w-0">
+            <h2 className="text-lg sm:text-xl font-bold text-white">Create New Task</h2>
+            <p className="text-xs sm:text-sm text-slate-400">Let AI help you plan your work</p>
           </div>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
           <input
-            className="flex-1 bg-slate-700/30 border border-slate-600/30 rounded-xl px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+            className="flex-1 bg-slate-700/30 border border-slate-600/30 rounded-xl px-4 py-3 text-sm sm:text-base text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
             placeholder="Describe your task or goal..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -172,14 +201,15 @@ export default function TaskBoard() {
             disabled={creating || !userId}
           />
           <button
-            className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 hover:from-indigo-500 hover:via-blue-500 hover:to-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium shadow-lg shadow-indigo-500/30 transition-all disabled:hover:from-indigo-600 disabled:hover:via-blue-600 disabled:hover:to-cyan-600"
+            className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 hover:from-indigo-500 hover:via-blue-500 hover:to-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm sm:text-base font-medium shadow-lg shadow-indigo-500/30 transition-all disabled:hover:from-indigo-600 disabled:hover:via-blue-600 disabled:hover:to-cyan-600 whitespace-nowrap"
             disabled={creating || !userId || !input.trim()}
             onClick={createCard}
           >
             {creating ? (
-              <span className="flex items-center gap-2">
+              <span className="flex items-center justify-center gap-2">
                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                Creating...
+                <span className="hidden sm:inline">Creating...</span>
+                <span className="sm:hidden">Creating</span>
               </span>
             ) : (
               "Create"
@@ -196,20 +226,20 @@ export default function TaskBoard() {
 
       {/* Tasks Grid */}
       {cards.length === 0 ? (
-        <div className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-800/40 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-12 text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-700/30 flex items-center justify-center">
-            <span className="text-slate-500 text-2xl">📋</span>
+        <div className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-800/40 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-8 sm:p-12 text-center">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-4 rounded-full bg-slate-700/30 flex items-center justify-center">
+            <span className="text-slate-500 text-xl sm:text-2xl">📋</span>
           </div>
-          <p className="text-slate-400 text-lg mb-2">No tasks yet</p>
-          <p className="text-slate-500 text-sm">Create your first AI-powered task above!</p>
+          <p className="text-slate-300 text-base sm:text-lg font-semibold mb-2">No tasks yet</p>
+          <p className="text-slate-400 text-sm">Create your first AI-powered task above!</p>
         </div>
       ) : (
         <div>
-          <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-            <div className="w-1 h-6 bg-gradient-to-b from-indigo-500 to-cyan-500 rounded-full"></div>
-            Your Tasks ({cards.length})
+          <h3 className="text-lg sm:text-xl font-bold text-white mb-4 flex items-center gap-2">
+            <div className="w-1 h-5 sm:h-6 bg-gradient-to-b from-indigo-500 to-cyan-500 rounded-full"></div>
+            Your Tasks <span className="text-slate-400 font-normal">({cards.length})</span>
           </h3>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {cards.map((task) => (
               <TaskCard
                 key={task.id}

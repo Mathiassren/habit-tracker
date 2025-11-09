@@ -109,20 +109,6 @@ function DateNavigator({ selectedDate, onChange, dotForDate }) {
                 padding: "12px 16px",
                 backdropFilter: "blur(10px)",
               },
-              day: { 
-                color: "#fff",
-                borderRadius: "8px",
-                "&:hover": {
-                  backgroundColor: "rgb(99 102 241 / 0.2)"
-                },
-                "&[data-selected]": {
-                  backgroundColor: "rgb(99 102 241 / 0.4)",
-                  color: "#fff"
-                }
-              },
-              weekday: {
-                color: "rgb(99 102 241 / 0.8)"
-              },
             }}
             className="w-full"
           />
@@ -655,16 +641,16 @@ export default function DailylogPage() {
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,_rgba(99,102,241,0.15)_1px,_transparent_0)] bg-[size:24px_24px] opacity-40"></div>
       
-      <div className="relative z-10 max-w-2xl mx-auto px-6 py-12">
+      <div className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-12">
         {/* Header Section */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 via-blue-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-indigo-500/50">
-              <CalendarIcon className="w-6 h-6 text-white" />
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-3 mb-4 sm:mb-6">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-indigo-500 via-blue-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-indigo-500/50 flex-shrink-0">
+              <CalendarIcon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
-            <div>
-              <h1 className="text-4xl font-bold text-gradient-vibrant">Daily Log</h1>
-              <p className="text-slate-400 text-lg mt-1">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gradient-vibrant leading-tight">Daily Log</h1>
+              <p className="text-slate-400 text-sm sm:text-base md:text-lg mt-1">
                 Track your habits day by day
               </p>
             </div>
@@ -678,12 +664,12 @@ export default function DailylogPage() {
         </div>
 
         {/* Progress Summary Card */}
-        <div className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-800/40 backdrop-blur-xl rounded-2xl border border-slate-700/50 shadow-2xl shadow-indigo-900/20 p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-white">
+        <div className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-800/40 backdrop-blur-xl rounded-2xl border border-slate-700/50 shadow-2xl shadow-indigo-900/20 p-4 sm:p-6 mb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 mb-4">
+            <h2 className="text-lg sm:text-xl font-bold text-white">
               {selectedDate.format("dddd, MMMM D, YYYY")}
             </h2>
-            <div className="text-sm text-slate-400">
+            <div className="text-xs sm:text-sm text-slate-400">
               {selectedDate.isSame(dayjs(), 'day') ? "Today" : selectedDate.isBefore(dayjs(), 'day') ? "Past" : "Future"}
             </div>
           </div>

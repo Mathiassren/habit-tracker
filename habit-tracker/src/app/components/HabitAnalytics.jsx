@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { supabase } from "@/services/supabase";
 import dayjs from "dayjs";
 import isoWeek from "dayjs/plugin/isoWeek";
+import { X, Calendar, CheckCircle } from "lucide-react";
 dayjs.extend(isoWeek);
 
 // Recharts (no Tooltip to avoid selector chain issues)
@@ -86,7 +87,7 @@ function TinyArea({ data = [] }) {
 
 /* ------------------------------ Mini Month UI ----------------------------- */
 
-function MiniMonth({ month, highlighted = new Set(), onChangeMonth }) {
+function MiniMonth({ month, highlighted = new Set(), onChangeMonth, onDateClick }) {
   const y = month.year();
   const m0 = month.month();
   const first = dayjs(new Date(y, m0, 1));
@@ -142,10 +143,14 @@ function MiniMonth({ month, highlighted = new Set(), onChangeMonth }) {
 
       <div className="grid grid-cols-7 gap-1">
         {rows.flat().map((c) => (
-          <div
+          <button
             key={c.iso}
+            onClick={() => onDateClick && c.inMonth && onDateClick(c.iso)}
+            disabled={!c.inMonth}
             className={`relative h-8 rounded-md text-xs ${
-              c.inMonth ? "text-white" : "text-slate-600"
+              c.inMonth 
+                ? "text-white hover:bg-slate-700/50 cursor-pointer transition-colors" 
+                : "text-slate-600 cursor-not-allowed"
             } flex items-center justify-center`}
           >
             <div className="relative inline-flex flex-col items-center leading-none">
@@ -156,7 +161,7 @@ function MiniMonth({ month, highlighted = new Set(), onChangeMonth }) {
                 />
               )}
             </div>
-          </div>
+          </button>
         ))}
       </div>
     </div>
@@ -174,6 +179,10 @@ export default function HabitAnalytics() {
   const [loading, setLoading] = useState(true);
   const [byDay, setByDay] = useState({}); // { 'YYYY-MM-DD': count }
   const [year, setYear] = useState(new Date().getFullYear());
+  const [userId, setUserId] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [habitDetails, setHabitDetails] = useState([]);
+  const [loadingDetails, setLoadingDetails] = useState(false);
 
   const todayISO = useMemo(() => toISO(new Date()), []);
   const yearRange = useMemo(() => {
@@ -189,9 +198,12 @@ export default function HabitAnalytics() {
       } = await supabase.auth.getUser();
       if (!user) {
         setByDay({});
+        setUserId(null);
         setLoading(false);
         return;
       }
+      
+      setUserId(user.id);
 
       // Prefer completed_on; fallback to completed_at within the year
       let { data, error } = await supabase
@@ -239,6 +251,53 @@ export default function HabitAnalytics() {
       .subscribe();
     return () => supabase.removeChannel(ch);
   }, [mounted, load]);
+
+  // Fetch habit details for a specific date
+  const fetchHabitDetails = useCallback(async (date) => {
+    if (!userId) return;
+    
+    setLoadingDetails(true);
+    try {
+      const { data, error } = await supabase
+        .from("habit_completions")
+        .select(`
+          completed_at,
+          habits (
+            id,
+            name,
+            color,
+            note
+          )
+        `)
+        .eq("user_id", userId)
+        .eq("completed_on", date)
+        .order("completed_at", { ascending: true });
+
+      if (error) {
+        console.error("Error fetching habit details:", error);
+        setHabitDetails([]);
+      } else {
+        setHabitDetails(data || []);
+      }
+    } catch (err) {
+      console.error("Error fetching habit details:", err);
+      setHabitDetails([]);
+    } finally {
+      setLoadingDetails(false);
+    }
+  }, [userId]);
+
+  // Handle date click
+  const handleDateClick = useCallback(async (dateISO) => {
+    setSelectedDate(dateISO);
+    await fetchHabitDetails(dateISO);
+  }, [fetchHabitDetails]);
+
+  // Close modal
+  const closeModal = useCallback(() => {
+    setSelectedDate(null);
+    setHabitDetails([]);
+  }, []);
 
   // Derived metrics (all computed on client after mount)
   const {
@@ -352,6 +411,7 @@ export default function HabitAnalytics() {
               month={month}
               highlighted={monthHighlightSet}
               onChangeMonth={setMonth}
+              onDateClick={handleDateClick}
             />
           </div>
         </div>
@@ -460,6 +520,94 @@ export default function HabitAnalytics() {
             </div>
           </div>
       </div>
+
+      {/* Habit Details Modal */}
+      {selectedDate && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-start justify-center z-50 p-4 pt-6 sm:pt-8">
+          <div className="bg-gradient-to-br from-slate-800/95 via-slate-800/90 to-slate-800/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 w-full max-w-md max-h-[80vh] overflow-hidden mt-0 sm:mt-4">
+            {/* Modal Header */}
+            <div className="p-6 border-b border-slate-700/50 bg-gradient-to-r from-indigo-600/10 via-blue-600/10 to-cyan-600/10">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-blue-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-indigo-500/50">
+                    <Calendar className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white">
+                      {new Date(selectedDate).toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </h3>
+                    <p className="text-gray-400 text-sm">
+                      {habitDetails.length} habit{habitDetails.length === 1 ? '' : 's'} completed
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={closeModal}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-700/50 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors border border-slate-600/50"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 max-h-96 overflow-y-auto">
+              {loadingDetails ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+                </div>
+              ) : habitDetails.length === 0 ? (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-700/30 flex items-center justify-center">
+                    <Calendar className="w-8 h-8 text-slate-500" />
+                  </div>
+                  <p className="text-slate-400">No habits completed on this date</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {habitDetails.map((completion, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-3 p-4 bg-slate-700/30 rounded-xl border border-slate-600/30 hover:border-indigo-500/30 transition-colors"
+                    >
+                      <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">
+                        <CheckCircle className="w-5 h-5 text-emerald-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-white font-semibold mb-1">
+                          {completion.habits?.name || 'Unknown Habit'}
+                        </h4>
+                        <p className="text-slate-400 text-sm">
+                          Completed at {new Date(completion.completed_at).toLocaleTimeString(navigator.language || undefined, {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                        {completion.habits?.note && (
+                          <p className="text-slate-500 text-xs mt-2 italic border-l-2 border-indigo-500/30 pl-2">
+                            "{completion.habits.note}"
+                          </p>
+                        )}
+                      </div>
+                      {completion.habits?.color && (
+                        <div
+                          className="w-5 h-5 rounded-full border-2 border-slate-600 shadow-sm flex-shrink-0"
+                          style={{ backgroundColor: completion.habits.color }}
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

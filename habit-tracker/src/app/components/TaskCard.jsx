@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { X, AlertTriangle } from "lucide-react";
 
 export default function TaskCard({
   task,
@@ -7,6 +8,7 @@ export default function TaskCard({
   onDelete = () => {},
 }) {
   const [open, setOpen] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const priorityColors = {
     low: {
@@ -74,11 +76,7 @@ export default function TaskCard({
         </button>
         <button
           className="text-xs text-red-400 hover:text-red-300 transition-colors font-medium"
-          onClick={() => {
-            if (confirm("Are you sure you want to delete this task?")) {
-              onDelete(task.id);
-            }
-          }}
+          onClick={() => setShowDeleteModal(true)}
         >
           Delete
         </button>
@@ -149,6 +147,61 @@ export default function TaskCard({
               </ul>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+          <div className="bg-gradient-to-br from-slate-800/95 via-slate-800/90 to-slate-800/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 w-full max-w-md overflow-hidden">
+            {/* Modal Header */}
+            <div className="p-6 border-b border-slate-700/50 bg-gradient-to-r from-red-600/10 via-rose-600/10 to-red-600/10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center border border-red-500/30">
+                  <AlertTriangle className="w-5 h-5 text-red-400" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-white">Delete Task</h3>
+                  <p className="text-gray-400 text-sm mt-1">This action cannot be undone</p>
+                </div>
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-700/50 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors border border-slate-600/50"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6">
+              <p className="text-slate-300 mb-2">
+                Are you sure you want to delete <span className="font-semibold text-white">"{task.title}"</span>?
+              </p>
+              <p className="text-slate-400 text-sm">
+                All associated data will be permanently removed.
+              </p>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="p-6 pt-0 flex gap-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="flex-1 px-4 py-3 rounded-xl bg-slate-700/50 hover:bg-slate-700 text-white transition-colors border border-slate-600/50 font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  onDelete(task.id);
+                  setShowDeleteModal(false);
+                }}
+                className="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white shadow-lg shadow-red-500/30 transition-all font-medium"
+              >
+                Delete Task
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
