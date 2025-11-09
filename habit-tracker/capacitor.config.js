@@ -16,7 +16,13 @@ const config = {
       keystorePath: undefined,
       keystoreAlias: undefined,
     },
-    allowMixedContent: true
+    allowMixedContent: true,
+    // Enable deep links for OAuth callbacks
+    allowNavigation: [
+      'https://habify1-5lwwsyfgu-mathiassrens-projects.vercel.app',
+      'https://*.supabase.co',
+      'https://accounts.google.com'
+    ]
   }
 };
 

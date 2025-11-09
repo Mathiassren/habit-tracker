@@ -36,13 +36,48 @@ export function useAuth() {
   }, [load]);
 
   const loginWithGoogle = async () => {
-    const redirectTo = `${window.location.origin}/auth/callback`;
-    const { error } = await supabase.auth.signInWithOAuth({
+    // Detect if running in Capacitor (mobile app)
+    const isCapacitor = typeof window !== 'undefined' && window.Capacitor;
+    
+    // Use app's custom scheme for mobile, regular URL for web
+    let redirectTo;
+    if (isCapacitor) {
+      // Use the app's custom URL scheme for deep linking back to the app
+      redirectTo = `com.habify.app://auth/callback`;
+    } else {
+      redirectTo = `${window.location.origin}/auth/callback`;
+    }
+    
+    const { error, data } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo, queryParams: { prompt: "select_account" } },
+      options: { 
+        redirectTo, 
+        queryParams: { prompt: "select_account" },
+      },
     });
+    
     if (error) {
       toast.error(error.message || "Failed to sign in with Google");
+      return;
+    }
+    
+    // If in Capacitor and we have a URL, open it in the in-app browser
+    // This prevents opening external Chrome browser
+    if (isCapacitor && data?.url) {
+      try {
+        // Dynamically import Capacitor Browser plugin
+        const { Browser } = await import('@capacitor/browser');
+        await Browser.open({
+          url: data.url,
+          presentationStyle: 'popover', // Opens as modal overlay, better UX
+        });
+        // Note: When OAuth completes, it will redirect to com.habify.app://auth/callback
+        // The App plugin will handle this deep link and navigate to /auth/callback
+        // The callback page will then process the authentication
+      } catch (err) {
+        // Fallback: if Browser plugin not available, let Supabase handle it
+        // This will still work but might open external browser
+      }
     }
   };
 

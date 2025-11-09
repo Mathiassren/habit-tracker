@@ -10,11 +10,19 @@ export default function OAuthCallback() {
 
   useEffect(() => {
     (async () => {
+      // Handle deep link callback from mobile app
+      // If we're in Capacitor and the URL has the custom scheme, convert it to https
+      let callbackUrl = window.location.href;
+      if (typeof window !== 'undefined' && window.Capacitor) {
+        // Replace custom scheme with https for Supabase
+        callbackUrl = callbackUrl.replace(/^com\.habify\.app:\/\//, 'https://habify1-5lwwsyfgu-mathiassrens-projects.vercel.app/');
+      }
+
       // Optional debug: confirm PKCE is present
       // console.log("hasVerifier?", !!localStorage.getItem("sb-pkce-code-verifier"));
 
       const { error } = await supabase.auth.exchangeCodeForSession(
-        window.location.href
+        callbackUrl
       );
 
       if (error) {
