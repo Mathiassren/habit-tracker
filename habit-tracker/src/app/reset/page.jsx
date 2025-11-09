@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/services/supabase";
 import { motion } from "framer-motion";
@@ -17,12 +17,14 @@ export default function ResetPassword() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const subscriptionRef = useRef(null);
 
   useEffect(() => {
     // Check if we have a password reset token in the URL (hash or query params)
     const checkResetToken = async () => {
-      // Check hash parameters (Supabase uses hash for password reset links)
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      // Check hash parameters first (Supabase uses hash for password reset links)
+      const hash = window.location.hash.substring(1);
+      const hashParams = new URLSearchParams(hash);
       const accessToken = hashParams.get("access_token");
       const type = hashParams.get("type");
       const code = hashParams.get("code");
@@ -33,74 +35,124 @@ export default function ResetPassword() {
       const queryType = queryParams.get("type");
       const queryCode = queryParams.get("code");
 
-      // Check if we already have a session (user clicked email link and Supabase set session)
-      let { data: { session } } = await supabase.auth.getSession();
-      
-      // If we have recovery tokens/code in URL, Supabase should process them automatically
+      // Debug logging (remove in production)
+      if (hash || window.location.search) {
+        console.log("Reset page URL params:", { hash, search: window.location.search });
+      }
+
+      // Check if we have recovery tokens/code in URL
       const hasRecoveryToken = (accessToken && type === "recovery") || 
                                 (queryToken && queryType === "recovery") ||
                                 (code && type === "recovery") ||
                                 (queryCode && queryType === "recovery");
       
       if (hasRecoveryToken) {
-        // If we have tokens but no session yet, Supabase needs to process them
-        if (!session) {
-          // Try to exchange code for session if we have a code parameter
-          if (code || queryCode) {
-            try {
-              const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(
-                window.location.href
-              );
-              if (exchangeError) {
-                console.error("Error exchanging code:", exchangeError);
-                setError("Invalid or expired reset link. Please request a new password reset.");
-                return;
-              }
-              // Get session after exchange
-              const { data: { session: newSession } } = await supabase.auth.getSession();
-              session = newSession;
-            } catch (err) {
-              console.error("Error exchanging code:", err);
-              setError("Invalid or expired reset link. Please request a new password reset.");
-              return;
-            }
-          } else {
-            // If we have access_token directly, Supabase should have processed it
-            // Wait a moment for Supabase to establish session
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            const { data: { session: newSession } } = await supabase.auth.getSession();
-            session = newSession;
-            
-            // If still no session, listen for auth state changes
-            if (!session) {
-              const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-                if (event === 'PASSWORD_RECOVERY' || session) {
-                  setMode("reset");
-                  subscription.unsubscribe();
-                }
-              });
-              
-              // Clean up subscription after 5 seconds
-              setTimeout(() => subscription.unsubscribe(), 5000);
-              return;
-            }
-          }
-        }
+        console.log("Recovery token detected, processing...");
         
-        if (session) {
-          setMode("reset");
-          // Clean up the URL
-          const cleanUrl = window.location.pathname;
-          window.history.replaceState({}, document.title, cleanUrl);
-        }
-      } else if (session) {
-        // If we have a session but no tokens, check if it's from a password recovery
-        // This handles the case where Supabase already processed the tokens
+        // Set mode to reset immediately so user sees the form
         setMode("reset");
+        
+        // Try to exchange code/token for session
+        if (code || queryCode) {
+          try {
+            console.log("Exchanging code for session...");
+            const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(
+              window.location.href
+            );
+            if (exchangeError) {
+              console.error("Error exchanging code:", exchangeError);
+              setError("Invalid or expired reset link. Please request a new password reset.");
+              setMode("request");
+              return;
+            }
+            console.log("Code exchanged successfully, session:", !!data.session);
+            // Clean up the URL after successful exchange
+            window.history.replaceState({}, document.title, window.location.pathname);
+          } catch (err) {
+            console.error("Error exchanging code:", err);
+            setError("Invalid or expired reset link. Please request a new password reset.");
+            setMode("request");
+            return;
+          }
+        } else if (accessToken || queryToken) {
+          // If we have access_token, Supabase should process it automatically
+          // Listen for auth state changes to detect when session is established
+          console.log("Access token detected, waiting for session...");
+          
+          // Clean up any existing subscription
+          if (subscriptionRef.current) {
+            subscriptionRef.current.unsubscribe();
+          }
+          
+          const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            console.log("Auth state change:", event, "Session:", !!session);
+            if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
+              setMode("reset");
+              // Clean up the URL
+              window.history.replaceState({}, document.title, window.location.pathname);
+              if (subscriptionRef.current) {
+                subscriptionRef.current.unsubscribe();
+                subscriptionRef.current = null;
+              }
+            }
+          });
+          
+          subscriptionRef.current = subscription;
+          
+          // Also check session after a short delay
+          setTimeout(async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+              setMode("reset");
+              window.history.replaceState({}, document.title, window.location.pathname);
+              if (subscriptionRef.current) {
+                subscriptionRef.current.unsubscribe();
+                subscriptionRef.current = null;
+              }
+            } else {
+              // If still no session after 3 seconds, show error
+              setTimeout(() => {
+                const { data: { session: finalSession } } = await supabase.auth.getSession();
+                if (!finalSession) {
+                  setError("Could not verify reset link. Please request a new password reset.");
+                  setMode("request");
+                  if (subscriptionRef.current) {
+                    subscriptionRef.current.unsubscribe();
+                    subscriptionRef.current = null;
+                  }
+                }
+              }, 2000);
+            }
+          }, 1000);
+          
+          // Clean up subscription after 10 seconds
+          setTimeout(() => {
+            if (subscriptionRef.current) {
+              subscriptionRef.current.unsubscribe();
+              subscriptionRef.current = null;
+            }
+          }, 10000);
+        }
+      } else {
+        // Check if we already have a session (might be from a previous reset attempt)
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          // Check if this session is from password recovery by checking URL or session metadata
+          // For now, if user is on /reset page with a session, assume it's for password reset
+          setMode("reset");
+        }
       }
     };
 
     checkResetToken();
+    
+    // Cleanup subscription on unmount
+    return () => {
+      if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe();
+        subscriptionRef.current = null;
+      }
+    };
   }, []);
 
   async function handleRequestReset(e) {
