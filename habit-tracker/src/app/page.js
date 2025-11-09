@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import Lottie from "lottie-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { supabase } from "@/services/supabase";
 
 export default function Home() {
@@ -18,6 +19,7 @@ export default function Home() {
   const [mode, setMode] = useState("login"); // "login" | "signup"
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState(null);
   const [infoMsg, setInfoMsg] = useState(null);
@@ -77,9 +79,23 @@ export default function Home() {
         window.location.href = "/dashboard";
         return; // ensure we don't run the rest of the block
       } else {
+        // Signup mode - validate password confirmation
+        if (password !== confirmPassword) {
+          setAuthError("Passwords do not match. Please try again.");
+          setLoading(false);
+          return;
+        }
+        if (password.length < 6) {
+          setAuthError("Password must be at least 6 characters long.");
+          setLoading(false);
+          return;
+        }
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
         setInfoMsg("Check your inbox to confirm your email before logging in.");
+        // Clear form after successful signup
+        setPassword("");
+        setConfirmPassword("");
       }
     } catch (err) {
       setAuthError(err?.message || "Something went wrong. Try again.");
@@ -114,6 +130,8 @@ export default function Home() {
     setMode((m) => (m === "login" ? "signup" : "login"));
     setAuthError(null);
     setInfoMsg(null);
+    setPassword("");
+    setConfirmPassword("");
   }
 
   return (
@@ -231,6 +249,30 @@ export default function Home() {
             />
           </div>
 
+          {/* Confirm Password Field - Only shown in signup mode */}
+          {mode === "signup" && (
+            <div>
+              <label htmlFor="confirmPassword" className="mb-2 block text-sm font-medium text-slate-300">
+                Confirm Password
+              </label>
+              <input
+                id="confirmPassword"
+                type="password"
+                required
+                minLength={6}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full rounded-xl border border-slate-600/30 bg-slate-700/30 px-4 py-3 text-sm text-white placeholder-slate-400 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50 transition-all"
+                placeholder="Confirm your password"
+                autoComplete="new-password"
+                aria-invalid={!!authError || (confirmPassword && password !== confirmPassword)}
+              />
+              {confirmPassword && password !== confirmPassword && (
+                <p className="mt-2 text-xs text-red-400">Passwords do not match</p>
+              )}
+            </div>
+          )}
+
           {authError && (
             <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300 flex items-center gap-2">
               <span>⚠️</span>
@@ -306,6 +348,28 @@ export default function Home() {
           />
         </motion.div>
       )}
+
+      {/* Footer Links */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6, delay: 0.5 }}
+        className="mt-12 relative z-10 flex flex-wrap items-center justify-center gap-4 text-sm text-slate-400"
+      >
+        <Link
+          href="/privacy"
+          className="hover:text-indigo-400 transition-colors"
+        >
+          Privacy Policy
+        </Link>
+        <span className="text-slate-600">•</span>
+        <Link
+          href="/terms"
+          className="hover:text-indigo-400 transition-colors"
+        >
+          Terms of Service
+        </Link>
+      </motion.div>
     </div>
   );
 }

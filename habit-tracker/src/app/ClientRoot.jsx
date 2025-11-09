@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../services/supabase"; // -> re-exports browser client
 import Nav from "../app/components/nav";
+import { Toaster } from "react-hot-toast";
 
 export default function ClientRoot({ children, user }) {
   const [mounted, setMounted] = useState(false);
@@ -58,6 +59,30 @@ export default function ClientRoot({ children, user }) {
         {mounted ? <Nav /> : <nav className="p-4" />}
       </div>
       {children}
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#1e293b',
+            color: '#fff',
+            border: '1px solid rgba(99, 102, 241, 0.3)',
+            borderRadius: '12px',
+          },
+          success: {
+            iconTheme: {
+              primary: '#10b981',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
     </>
   );
 }

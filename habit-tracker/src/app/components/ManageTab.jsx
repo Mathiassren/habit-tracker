@@ -47,16 +47,24 @@ const ManageTab = ({ user, setUser }) => {
         const profileAvatar = profile?.avatar_url;
         const metadataAvatar = user?.user_metadata?.avatar_url;
         
-        if (profileAvatar && (profileAvatar.includes('supabase') || profileAvatar !== metadataAvatar)) {
-          setAvatarUrl(profileAvatar);
+        // Always use profile avatar if it exists (it's the source of truth for custom uploads)
+        if (profileAvatar) {
+          // Add cache-busting parameter to force refresh
+          const avatarWithCache = profileAvatar.includes('?') 
+            ? profileAvatar.split('?')[0] + `?v=${Date.now()}`
+            : `${profileAvatar}?v=${Date.now()}`;
+          setAvatarUrl(avatarWithCache);
+          
           // Also update user_metadata to keep it in sync
           if (metadataAvatar !== profileAvatar) {
             await supabase.auth.updateUser({
               data: { avatar_url: profileAvatar },
             });
           }
+        } else if (metadataAvatar) {
+          setAvatarUrl(metadataAvatar);
         } else {
-          setAvatarUrl(metadataAvatar || "");
+          setAvatarUrl("");
         }
 
         // Use profile full_name if available, otherwise user_metadata
@@ -64,11 +72,12 @@ const ManageTab = ({ user, setUser }) => {
       } catch (error) {
         console.error("Error loading profile:", error);
         // Fallback to user_metadata
-        setAvatarUrl(user?.user_metadata?.avatar_url || "");
+        const metadataAvatar = user?.user_metadata?.avatar_url;
+        setAvatarUrl(metadataAvatar || "");
         setFullName(user?.user_metadata?.full_name || "");
       }
     })();
-  }, [user]);
+  }, [user?.id, user?.user_metadata?.avatar_url]); // More specific dependencies
 
   // --- ensure a default avatar for first-time users (runs once per user)
   useEffect(() => {
@@ -223,10 +232,35 @@ const ManageTab = ({ user, setUser }) => {
       await supabase.auth.refreshSession();
       const { data: fresh } = await supabase.auth.getUser();
       if (fresh?.user) {
-        setUser?.(fresh.user);
+        // Update user with new avatar_url in metadata
+        const updatedUser = {
+          ...fresh.user,
+          user_metadata: {
+            ...fresh.user.user_metadata,
+            avatar_url: publicUrl,
+          },
+        };
+        setUser?.(updatedUser);
       }
-      setAvatarUrl(publicUrl);
+      // Update local avatar URL immediately with cache-busting
+      setAvatarUrl(`${publicUrl}?v=${Date.now()}`);
       setMsg("Avatar uploaded successfully!");
+      
+      // Force a reload from profiles table to ensure sync
+      setTimeout(async () => {
+        try {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("avatar_url")
+            .eq("id", user.id)
+            .single();
+          if (profile?.avatar_url) {
+            setAvatarUrl(`${profile.avatar_url}?v=${Date.now()}`);
+          }
+        } catch (error) {
+          console.error("Error reloading avatar:", error);
+        }
+      }, 500);
       
       // Clear message after 3 seconds
       setTimeout(() => setMsg(""), 3000);
@@ -293,6 +327,7 @@ const ManageTab = ({ user, setUser }) => {
               <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-blue-500 to-cyan-500 rounded-full blur-lg opacity-30"></div>
               {avatarUrl ? (
                 <Image
+                  key={avatarUrl} // Force re-render when avatarUrl changes
                   src={avatarUrl}
                   alt="Avatar"
                   width={80}
@@ -303,6 +338,7 @@ const ManageTab = ({ user, setUser }) => {
               ) : (
                 <div className="relative w-20 h-20 rounded-full bg-slate-700 border-4 border-indigo-500/50 grid place-items-center overflow-hidden shadow-xl">
                   <img
+                    key={user?.user_metadata?.avatar_url || "default"}
                     src={user?.user_metadata?.avatar_url || "/default-avatar.png"}
                     alt="User Avatar"
                     className="w-full h-full object-cover"

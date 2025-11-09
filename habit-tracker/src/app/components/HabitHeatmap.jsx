@@ -159,7 +159,10 @@ export default function HabitHeatmap({
           Click any square to view details
         </div>
       </div>
-      <div className="overflow-x-auto -mx-2 px-2" style={{ cursor: 'pointer' }}>
+      <div 
+        className="overflow-x-auto -mx-2 px-2 heatmap-scroll" 
+        style={{ cursor: 'pointer' }}
+      >
         <ActivityCalendar
           data={data} // Jan 1 → Dec 31 (all dates included for clickability)
           startDate={startISO}

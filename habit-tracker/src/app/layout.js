@@ -6,6 +6,7 @@ import "./globals.css";
 
 import ClientRoot from "./ClientRoot";
 import { createRscClient } from "../services/supabase/server";
+import { ErrorBoundary } from "../components/ErrorBoundary";
 
 const geistSans = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
 const geistMono = Geist_Mono({
@@ -37,7 +38,9 @@ export default async function RootLayout({ children }) {
     >
       <body className="antialiased">
         <MantineProvider withGlobalStyles withNormalizeCSS>
-          <ClientRoot user={user}>{children}</ClientRoot>
+          <ErrorBoundary>
+            <ClientRoot user={user}>{children}</ClientRoot>
+          </ErrorBoundary>
         </MantineProvider>
       </body>
     </html>

@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/services/supabase";
+import toast from "react-hot-toast";
 
 export function useAuth() {
   const [user, setUser] = useState(null);
@@ -40,12 +41,18 @@ export function useAuth() {
       provider: "google",
       options: { redirectTo, queryParams: { prompt: "select_account" } },
     });
-    if (error) alert(error.message);
+    if (error) {
+      toast.error(error.message || "Failed to sign in with Google");
+    }
   };
 
   const logout = async () => {
     const { error } = await supabase.auth.signOut();
-    if (error) return alert(error.message);
+    if (error) {
+      toast.error(error.message || "Failed to sign out");
+      return;
+    }
+    toast.success("Signed out successfully");
     window.location.assign("/");
   };
 

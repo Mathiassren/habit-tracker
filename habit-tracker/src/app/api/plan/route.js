@@ -1,19 +1,58 @@
 import OpenAI from "openai";
+import { createRouteHandlerClient } from "@/services/supabase/server";
 
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
 
+// Simple rate limiting (in-memory, resets on server restart)
+const rateLimitMap = new Map();
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = 5; // 5 requests per minute (lower for plan generation)
+
+function checkRateLimit(userId) {
+  const now = Date.now();
+  const userRequests = rateLimitMap.get(userId) || [];
+  const recentRequests = userRequests.filter(time => now - time < RATE_LIMIT_WINDOW);
+  
+  if (recentRequests.length >= RATE_LIMIT_MAX_REQUESTS) {
+    return false;
+  }
+  
+  recentRequests.push(now);
+  rateLimitMap.set(userId, recentRequests);
+  return true;
+}
+
 export async function POST(req) {
   try {
+    // Check authentication
+    const clientResult = await createRouteHandlerClient();
+    const { data: { user }, error: authError } = await clientResult.supabase.auth.getUser();
+    
+    if (authError || !user) {
+      return Response.json(
+        { ok: false, error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
+    // Check rate limit
+    if (!checkRateLimit(user.id)) {
+      return Response.json(
+        { ok: false, error: "Rate limit exceeded. Please try again in a minute." },
+        { status: 429 }
+      );
+    }
+
     // Check if API key is configured
     if (!process.env.OPENAI_API_KEY) {
       console.error("OPENAI_API_KEY is not set in environment variables");
       return Response.json(
         { 
           ok: false, 
-          error: "OpenAI API key is not configured. Please set OPENAI_API_KEY in your environment variables." 
+          error: "Service unavailable" 
         },
-        { status: 500 }
+        { status: 503 }
       );
     }
 
@@ -22,6 +61,14 @@ export async function POST(req) {
     if (!prompt || !prompt.trim()) {
       return Response.json(
         { ok: false, error: "Prompt is required" },
+        { status: 400 }
+      );
+    }
+
+    // Limit prompt length
+    if (prompt.length > 500) {
+      return Response.json(
+        { ok: false, error: "Prompt is too long (max 500 characters)" },
         { status: 400 }
       );
     }

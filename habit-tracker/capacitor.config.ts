@@ -1,0 +1,24 @@
+import { CapacitorConfig } from '@capacitor/cli';
+
+const config: CapacitorConfig = {
+  appId: 'com.habify.app',
+  appName: 'Habify',
+  webDir: '.next',
+  server: {
+    // Replace with your Vercel deployment URL
+    // For local development, use: url: 'http://localhost:3000'
+    // For production, use your Vercel URL: url: 'https://your-app.vercel.app'
+    url: process.env.CAPACITOR_SERVER_URL || 'https://your-app.vercel.app',
+    cleartext: true
+  },
+  android: {
+    buildOptions: {
+      keystorePath: undefined,
+      keystoreAlias: undefined,
+    }
+  }
+};
+
+export default config;
+
+

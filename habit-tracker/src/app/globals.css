@@ -110,6 +110,32 @@ html {
   background: linear-gradient(180deg, #818cf8, #22d3ee);
 }
 
+/* Smaller scrollbar for heatmap */
+.heatmap-scroll::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.heatmap-scroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 2px;
+}
+
+.heatmap-scroll::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.4);
+  border-radius: 2px;
+}
+
+.heatmap-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.6);
+}
+
+/* Firefox scrollbar for heatmap */
+.heatmap-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(99, 102, 241, 0.4) rgba(255, 255, 255, 0.03);
+}
+
 /* Focus styles for accessibility */
 .focus-ring {
   @apply focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:ring-offset-2 focus:ring-offset-transparent;
