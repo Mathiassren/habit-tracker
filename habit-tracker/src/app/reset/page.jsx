@@ -22,6 +22,9 @@ export default function ResetPassword() {
   useEffect(() => {
     // Check if we have a password reset token in the URL (hash or query params)
     const checkResetToken = async () => {
+      // Guard against SSR
+      if (typeof window === 'undefined') return;
+      
       // Check hash parameters first (Supabase uses hash for password reset links)
       const hash = window.location.hash.substring(1);
       const hashParams = new URLSearchParams(hash);
@@ -35,11 +38,6 @@ export default function ResetPassword() {
       const queryType = queryParams.get("type");
       const queryCode = queryParams.get("code");
 
-      // Debug logging (remove in production)
-      if (hash || window.location.search) {
-        console.log("Reset page URL params:", { hash, search: window.location.search });
-      }
-
       // Check if we have recovery tokens/code in URL
       const hasRecoveryToken = (accessToken && type === "recovery") || 
                                 (queryToken && queryType === "recovery") ||
@@ -47,29 +45,23 @@ export default function ResetPassword() {
                                 (queryCode && queryType === "recovery");
       
       if (hasRecoveryToken) {
-        console.log("Recovery token detected, processing...");
-        
         // Set mode to reset immediately so user sees the form
         setMode("reset");
         
         // Try to exchange code/token for session
         if (code || queryCode) {
           try {
-            console.log("Exchanging code for session...");
             const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(
               window.location.href
             );
             if (exchangeError) {
-              console.error("Error exchanging code:", exchangeError);
               setError("Invalid or expired reset link. Please request a new password reset.");
               setMode("request");
               return;
             }
-            console.log("Code exchanged successfully, session:", !!data.session);
             // Clean up the URL after successful exchange
             window.history.replaceState({}, document.title, window.location.pathname);
           } catch (err) {
-            console.error("Error exchanging code:", err);
             setError("Invalid or expired reset link. Please request a new password reset.");
             setMode("request");
             return;
@@ -77,7 +69,6 @@ export default function ResetPassword() {
         } else if (accessToken || queryToken) {
           // If we have access_token, Supabase should process it automatically
           // Listen for auth state changes to detect when session is established
-          console.log("Access token detected, waiting for session...");
           
           // Clean up any existing subscription
           if (subscriptionRef.current) {
@@ -85,11 +76,12 @@ export default function ResetPassword() {
           }
           
           const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            console.log("Auth state change:", event, "Session:", !!session);
             if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
               setMode("reset");
               // Clean up the URL
-              window.history.replaceState({}, document.title, window.location.pathname);
+              if (typeof window !== 'undefined') {
+                window.history.replaceState({}, document.title, window.location.pathname);
+              }
               if (subscriptionRef.current) {
                 subscriptionRef.current.unsubscribe();
                 subscriptionRef.current = null;
@@ -104,7 +96,9 @@ export default function ResetPassword() {
             const { data: { session } } = await supabase.auth.getSession();
             if (session) {
               setMode("reset");
-              window.history.replaceState({}, document.title, window.location.pathname);
+              if (typeof window !== 'undefined') {
+                window.history.replaceState({}, document.title, window.location.pathname);
+              }
               if (subscriptionRef.current) {
                 subscriptionRef.current.unsubscribe();
                 subscriptionRef.current = null;
