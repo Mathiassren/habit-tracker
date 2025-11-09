@@ -32,64 +32,94 @@ const PreferencesTab = ({ user, createdAt, setUser = () => {} }) => {
   };
 
   return (
-    <div>
-      <h2 className="font-bold font-play mb-3">Account Details</h2>
+    <div className="space-y-6">
+      <div className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-800/40 backdrop-blur-xl rounded-2xl border border-slate-700/50 shadow-2xl shadow-indigo-900/20 p-8">
+        <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+          <div className="w-1 h-6 bg-gradient-to-b from-indigo-500 to-cyan-500 rounded-full"></div>
+          Account Details
+        </h2>
 
-      <div className="flex flex-col gap-3 text-sm text-gray-300">
-        {/* ROW: Status */}
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="font-play md:text-lg basis-[100px] shrink-0">
-            Status
-          </span>
-          <span className="text-xs bg-[#072424] px-2 py-1 rounded-full text-[#09D8B9]">
-            {user ? "Authenticated" : "Not Authenticated"}
-          </span>
-        </div>
+        <div className="space-y-6">
+          {/* Status Card */}
+          <div className="bg-slate-700/20 rounded-xl border border-slate-600/30 p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30">
+                  <span className="text-indigo-400 text-xl">✓</span>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-400 uppercase tracking-wider mb-1">Status</p>
+                  <p className="text-lg font-semibold text-white">
+                    {user ? "Authenticated" : "Not Authenticated"}
+                  </p>
+                </div>
+              </div>
+              <span className="text-xs bg-indigo-500/20 px-3 py-1.5 rounded-full text-cyan-400 border border-indigo-500/30">
+                {user ? "Active" : "Inactive"}
+              </span>
+            </div>
+          </div>
 
-        {/* ROW: Created on */}
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="font-play md:text-lg basis-[100px] shrink-0">
-            Created on
-          </span>
-          <span className="text-gray-200">{createdAt}</span>
-        </div>
+          {/* Created Date Card */}
+          <div className="bg-slate-700/20 rounded-xl border border-slate-600/30 p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center border border-blue-500/30">
+                <span className="text-blue-400 text-xl">📅</span>
+              </div>
+              <div>
+                <p className="text-sm text-slate-400 uppercase tracking-wider mb-1">Account Created</p>
+                <p className="text-lg font-semibold text-white">{createdAt}</p>
+              </div>
+            </div>
+          </div>
 
-        {/* ROW: Name (input + Save inline) */}
-        <div className="flex flex-wrap items-center gap-2">
-          <label
-            htmlFor="full_name"
-            className="font-play md:text-lg basis-[100px] shrink-0"
-          >
-            Name
-          </label>
+          {/* Name Card */}
+          <div className="bg-slate-700/20 rounded-xl border border-slate-600/30 p-4">
+            <label htmlFor="full_name" className="block text-sm text-slate-400 uppercase tracking-wider mb-3">
+              Display Name
+            </label>
+            <div className="flex items-center gap-3">
+              <input
+                id="full_name"
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                autoComplete="name"
+                className="flex-1 bg-slate-800/50 border border-slate-600/30 text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+                placeholder="Enter your name"
+              />
+              <button
+                type="button"
+                onClick={updateName}
+                disabled={loading || !fullName.trim()}
+                className="shrink-0 rounded-xl bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 hover:from-indigo-500 hover:via-blue-500 hover:to-cyan-500 px-6 py-3 text-sm font-medium text-white transition-all shadow-lg shadow-indigo-500/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-indigo-600 disabled:hover:via-blue-600 disabled:hover:to-cyan-600"
+              >
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                    Saving...
+                  </span>
+                ) : (
+                  "Save"
+                )}
+              </button>
+            </div>
+          </div>
 
-          <input
-            id="full_name"
-            type="text"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            autoComplete="name"
-            className="min-w-0 flex-1 bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-
-          <button
-            type="button"
-            onClick={updateName}
-            disabled={loading}
-            className="shrink-0 rounded-md bg-[#4F46E5] hover:bg-purple-600 px-3 py-1.5 text-sm text-white transition disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            {loading ? "Updating..." : "Save"}
-          </button>
-        </div>
-
-        {/* ROW: Email */}
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="font-play md:text-lg basis-[100px] shrink-0">
-            Email
-          </span>
-          <span className="text-blue-400 break-words">
-            {user?.email || "Unknown"}
-          </span>
+          {/* Email Card */}
+          <div className="bg-slate-700/20 rounded-xl border border-slate-600/30 p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30">
+                <span className="text-cyan-400 text-xl">✉</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-slate-400 uppercase tracking-wider mb-1">Email Address</p>
+                <p className="text-lg font-semibold text-cyan-400 break-words">
+                  {user?.email || "Unknown"}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

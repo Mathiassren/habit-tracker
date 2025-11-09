@@ -1,20 +1,31 @@
 // Design System Tokens - Professional Design Standards
 
 export const designTokens = {
-  // Color Palette - Sophisticated & Accessible
+  // Color Palette - Modern, Sophisticated & Vibrant
   colors: {
     primary: {
-      50: '#faf5ff',
-      100: '#f3e8ff', 
-      200: '#e9d5ff',
-      300: '#d8b4fe',
-      400: '#c084fc',
-      500: '#a855f7', // Primary brand color
-      600: '#9333ea',
-      700: '#7c3aed',
-      800: '#6b21a8',
-      900: '#581c87',
-      950: '#3b0764'
+      50: '#eef2ff',
+      100: '#e0e7ff', 
+      200: '#c7d2fe',
+      300: '#a5b4fc',
+      400: '#818cf8',
+      500: '#6366f1', // Primary brand color - indigo
+      600: '#4f46e5',
+      700: '#4338ca',
+      800: '#3730a3',
+      900: '#312e81',
+      950: '#1e1b4b'
+    },
+    
+    accent: {
+      indigo: '#6366f1',
+      blue: '#3b82f6',
+      cyan: '#06b6d4',
+      teal: '#14b8a6',
+      emerald: '#10b981',
+      amber: '#f59e0b',
+      orange: '#f97316',
+      rose: '#f43f5e'
     },
     
     neutral: {
@@ -28,32 +39,32 @@ export const designTokens = {
       600: '#525252',
       700: '#404040',
       800: '#262626',
-      850: '#1f1f1f',
-      900: '#171717',
-      925: '#0f0f0f',
-      950: '#0a0a0a'
+      850: '#1a1a1a',
+      900: '#141414',
+      925: '#0d0d0d',
+      950: '#080808'
     },
     
     semantic: {
       success: {
-        light: '#10b981',
-        DEFAULT: '#059669',
-        dark: '#047857'
+        light: '#34d399',
+        DEFAULT: '#10b981',
+        dark: '#059669'
       },
       warning: {
-        light: '#f59e0b',
-        DEFAULT: '#d97706',
-        dark: '#b45309'
+        light: '#fbbf24',
+        DEFAULT: '#f59e0b',
+        dark: '#d97706'
       },
       error: {
-        light: '#ef4444',
-        DEFAULT: '#dc2626',
-        dark: '#b91c1c'
+        light: '#f87171',
+        DEFAULT: '#ef4444',
+        dark: '#dc2626'
       },
       info: {
-        light: '#3b82f6',
-        DEFAULT: '#2563eb',
-        dark: '#1d4ed8'
+        light: '#60a5fa',
+        DEFAULT: '#3b82f6',
+        dark: '#2563eb'
       }
     }
   },

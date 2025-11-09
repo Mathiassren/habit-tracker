@@ -1,13 +1,13 @@
 const TabNavigation = ({ activeTab, setActiveTab }) => (
   <div className="mt-6 flex space-x-4 border-b border-gray-600 pb-2">
-    {["preferences", "manage", "App"].map((tab) => (
+    {["preferences", "manage", "app"].map((tab) => (
       <button
         key={tab}
         onClick={() => setActiveTab(tab)}
-        className={`px-4 py-2 rounded-md ${
+        className={`px-4 py-2 rounded-md transition-colors ${
           activeTab === tab
-            ? "border-b-2 border-purple-400 text-white"
-            : "text-gray-400"
+            ? "border-b-2 border-indigo-400 text-white"
+            : "text-gray-400 hover:text-gray-300"
         }`}
       >
         {tab.charAt(0).toUpperCase() + tab.slice(1)}

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { supabase } from "@/services/supabase";
 
 const isISO = (s) => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
@@ -18,7 +18,7 @@ export function useHeatmap(
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  async function fetchHeatmap() {
+  const fetchHeatmap = useCallback(async () => {
     if (!userId || !isISO(sinceISO) || !isISO(untilISO)) {
       setRows([]);
       setLoading(false);
@@ -70,7 +70,7 @@ export function useHeatmap(
     } finally {
       setLoading(false);
     }
-  }
+  }, [userId, sinceISO, untilISO, tz]);
 
   useEffect(() => {
     fetchHeatmap();
@@ -94,8 +94,7 @@ export function useHeatmap(
     return () => {
       supabase.removeChannel(ch);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, sinceISO, untilISO, tz, refreshKey]);
+  }, [userId, sinceISO, untilISO, tz, refreshKey, fetchHeatmap]);
 
   const byDate = useMemo(() => {
     const m = {};

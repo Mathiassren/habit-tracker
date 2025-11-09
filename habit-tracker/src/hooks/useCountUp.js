@@ -14,13 +14,31 @@ export function useCountUp(end, duration = 1000, start = 0) {
   const frameRef = useRef();
   const startTimeRef = useRef();
   const startValueRef = useRef(start);
+  const endRef = useRef(end);
+  const countRef = useRef(count);
+
+  // Keep countRef in sync with count
+  useEffect(() => {
+    countRef.current = count;
+  }, [count]);
 
   useEffect(() => {
+    // If end value hasn't changed, no need to re-animate
+    if (end === endRef.current && end === countRef.current) return;
+    
+    // Update end ref
+    endRef.current = end;
+    
     // If end value is the same as current, no need to animate
-    if (end === count) return;
+    if (end === countRef.current) return;
+
+    // Cancel any ongoing animation
+    if (frameRef.current) {
+      cancelAnimationFrame(frameRef.current);
+    }
 
     // Reset animation state
-    startValueRef.current = count;
+    startValueRef.current = countRef.current;
     startTimeRef.current = performance.now();
 
     const animate = (currentTime) => {
@@ -30,7 +48,7 @@ export function useCountUp(end, duration = 1000, start = 0) {
       // Easing function for smooth animation (ease-out)
       const easeOut = 1 - Math.pow(1 - progress, 3);
       
-      const currentValue = startValueRef.current + (end - startValueRef.current) * easeOut;
+      const currentValue = startValueRef.current + (endRef.current - startValueRef.current) * easeOut;
       
       setCount(currentValue);
 
@@ -38,7 +56,7 @@ export function useCountUp(end, duration = 1000, start = 0) {
         frameRef.current = requestAnimationFrame(animate);
       } else {
         // Ensure we end exactly at the target value
-        setCount(end);
+        setCount(endRef.current);
       }
     };
 

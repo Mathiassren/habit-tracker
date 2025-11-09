@@ -49,68 +49,132 @@ const toLocalISO = (ts) =>
 function DateNavigator({ selectedDate, onChange, dotForDate }) {
   const go = (delta) => onChange(selectedDate.add(delta, "day"));
   return (
-    <div className="flex items-center w-42 gap-3 mb-6">
-      <button onClick={() => go(-1)} aria-label="Previous day">
-        <ChevronLeftIcon className="w-5 h-5 text-[#9333EA]" />
-      </button>
-      <DatePickerInput
-        value={selectedDate.toDate()}
-        onChange={(d) => d && onChange(dayjs(d))}
-        valueFormat="ddd (DD MMM)"
-        leftSection={<CalendarIcon className="w-5 h-5 text-gray-400" />}
-        renderDay={(date) => {
-          const dateStr = dayjs(date).format("YYYY-MM-DD");
-          const color = dotForDate?.(dateStr);
-          return (
-            <div className="relative flex items-center justify-center">
-              <span>{date.getDate()}</span>
-              {color && (
-                <span
-                  className="absolute w-1.5 h-1.5 rounded-full"
-                  style={{ backgroundColor: color, marginTop: "16px" }}
-                />
-              )}
-            </div>
-          );
-        }}
-        popoverProps={{
-          withinPortal: true,
-          styles: { dropdown: { backgroundColor: "#000000" } },
-        }}
-        styles={{
-          input: {
-            backgroundColor: "#1a1a1a",
-            color: "#fff",
-            border: "1px solid #333",
-          },
-          day: { color: "#fff" },
-        }}
-      />
-      <button onClick={() => go(1)} aria-label="Next day">
-        <ChevronRightIcon className="w-5 h-5 text-[#9333EA]" />
-      </button>
+    <div className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-800/40 backdrop-blur-xl rounded-xl border border-slate-700/50 p-4">
+      <div className="flex items-center gap-3">
+        <button 
+          onClick={() => go(-1)} 
+          aria-label="Previous day"
+          className="w-10 h-10 rounded-lg bg-slate-700/30 hover:bg-slate-700/50 border border-slate-600/30 hover:border-indigo-500/50 transition-all duration-300 flex items-center justify-center shadow-lg hover:shadow-indigo-500/20"
+        >
+          <ChevronLeftIcon className="w-5 h-5 text-slate-300 group-hover:text-indigo-400" />
+        </button>
+        <div className="flex-1">
+          <DatePickerInput
+            value={selectedDate.toDate()}
+            onChange={(d) => d && onChange(dayjs(d))}
+            valueFormat="ddd, MMMM D"
+            renderDay={(date) => {
+              const dateStr = dayjs(date).format("YYYY-MM-DD");
+              const color = dotForDate?.(dateStr);
+              const isSelected = dateStr === selectedDate.format("YYYY-MM-DD");
+              const isToday = dateStr === dayjs().format("YYYY-MM-DD");
+              return (
+                <div className="relative flex items-center justify-center w-full h-full">
+                  <span className={`${isSelected ? 'text-white font-bold' : isToday ? 'text-indigo-400 font-semibold' : 'text-white'}`}>
+                    {date.getDate()}
+                  </span>
+                  {color && (
+                    <span
+                      className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full shadow-sm"
+                      style={{ 
+                        backgroundColor: color === "green" ? "#10b981" : color === "orange" ? "#f59e0b" : "#ef4444",
+                        boxShadow: `0 0 4px ${color === "green" ? "#10b981" : color === "orange" ? "#f59e0b" : "#ef4444"}40`
+                      }}
+                    />
+                  )}
+                  {isSelected && (
+                    <div className="absolute inset-0 rounded-md bg-indigo-500/20 border-2 border-indigo-400"></div>
+                  )}
+                </div>
+              );
+            }}
+            popoverProps={{
+              withinPortal: true,
+              styles: { 
+                dropdown: { 
+                  backgroundColor: "rgb(15 15 15 / 0.95)",
+                  backdropFilter: "blur(20px)",
+                  border: "1px solid rgb(99 102 241 / 0.3)",
+                  borderRadius: "16px"
+                } 
+              },
+            }}
+            styles={{
+              input: {
+                backgroundColor: "rgb(30 30 30 / 0.8)",
+                color: "#ffffff",
+                border: "1px solid rgb(99 102 241 / 0.3)",
+                borderRadius: "12px",
+                fontSize: "16px",
+                padding: "12px 16px",
+                backdropFilter: "blur(10px)",
+              },
+              day: { 
+                color: "#fff",
+                borderRadius: "8px",
+                "&:hover": {
+                  backgroundColor: "rgb(99 102 241 / 0.2)"
+                },
+                "&[data-selected]": {
+                  backgroundColor: "rgb(99 102 241 / 0.4)",
+                  color: "#fff"
+                }
+              },
+              weekday: {
+                color: "rgb(99 102 241 / 0.8)"
+              },
+            }}
+            className="w-full"
+          />
+        </div>
+        <button 
+          onClick={() => go(1)} 
+          aria-label="Next day"
+          className="w-10 h-10 rounded-lg bg-slate-700/30 hover:bg-slate-700/50 border border-slate-600/30 hover:border-indigo-500/50 transition-all duration-300 flex items-center justify-center shadow-lg hover:shadow-indigo-500/20"
+        >
+          <ChevronRightIcon className="w-5 h-5 text-slate-300 group-hover:text-indigo-400" />
+        </button>
+      </div>
     </div>
   );
 }
 
 function ProgressSummary({ completed, total }) {
-  const percent = useCountUp(total > 0 ? (completed / total) * 100 : 0, 700);
-  const animatedDone = useCountUp(completed, 500);
+  const rawPercent = total > 0 ? (completed / total) * 100 : 0;
+  // Round to whole number - no decimals
+  const targetPercent = Math.round(rawPercent);
+  // Always call hooks unconditionally - use 0 duration for 100% to skip animation
+  const percent = useCountUp(targetPercent, rawPercent === 100 ? 0 : 700);
+  const animatedDoneRaw = useCountUp(completed, 500);
+  
+  // Always display rounded values - no decimals
+  const displayPercent = Math.round(percent);
+  const displayDone = Math.round(animatedDoneRaw);
+  
   return (
-    <div className="mb-6">
-      <div className="flex justify-between text-sm text-gray-400 mb-1">
-        <span>Day's Progress</span>
-        <span>{percent}% complete</span>
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <div className="text-3xl font-bold bg-gradient-to-r from-indigo-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent mb-1">
+            {displayPercent}%
+          </div>
+          <div className="text-sm text-slate-400">Complete</div>
+        </div>
+        <div className="text-right">
+          <div className="text-2xl font-bold text-white mb-1">
+            {displayDone} <span className="text-sm font-normal text-slate-400">/ {total}</span>
+          </div>
+          <div className="text-sm text-slate-400">Habits</div>
+        </div>
       </div>
-      <div className="w-full bg-gray-800 rounded-full h-3 mb-2 overflow-hidden">
+      <div className="relative w-full bg-slate-700/30 rounded-full h-4 overflow-hidden shadow-inner">
         <div
-          className="bg-purple-600 h-3 rounded-full transition-all duration-500 ease-in-out"
-          style={{ width: `${percent}%` }}
-        />
+          className="h-full bg-gradient-to-r from-indigo-500 via-blue-500 to-cyan-500 rounded-full transition-all duration-1000 ease-out relative shadow-lg shadow-indigo-500/50"
+          style={{ width: `${displayPercent}%` }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse"></div>
+        </div>
       </div>
-      <p className="text-xs text-gray-500">
-        {animatedDone} / {total} habits
-      </p>
     </div>
   );
 }
@@ -141,38 +205,54 @@ function AddHabitModal({ open, onClose, onAdd }) {
   const [color, setColor] = useState("purple");
   if (!open) return null;
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-      <div className="bg-gray-900 p-6 rounded-lg shadow-lg w-80 text-center">
-        <h4 className="text-lg font-semibold mb-2">New Habit ✨</h4>
-        <p className="text-gray-400 text-sm mb-4">Add a new habit.</p>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Give your habit a name"
-          className="w-full px-3 py-2 mb-4 rounded bg-gray-800 text-white border border-gray-700 focus:border-purple-500 outline-none"
-        />
-        <p className="text-sm text-gray-400 mb-2">Choose a color:</p>
-        <ColorSwatchGroup value={color} onChange={setColor} />
-        {!name && (
-          <p className="text-red-500 text-sm mt-3">
-            Please write a name for the habit.
-          </p>
-        )}
-        <div className="flex justify-between mt-6">
-          <button
-            onClick={onClose}
-            className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded text-white"
-          >
-            Close
-          </button>
-          <button
-            onClick={() => onAdd({ name, color })}
-            className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded text-white"
-            disabled={!name}
-          >
-            Add Habit
-          </button>
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+      <div className="bg-gradient-to-br from-slate-800/95 via-slate-800/90 to-slate-800/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 w-full max-w-md overflow-hidden">
+        <div className="p-6 border-b border-slate-700/50 bg-gradient-to-r from-indigo-600/10 via-blue-600/10 to-cyan-600/10">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-blue-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-indigo-500/50">
+              <PlusIcon className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h4 className="text-xl font-bold text-white">New Habit ✨</h4>
+              <p className="text-slate-400 text-sm">Add a new habit to track</p>
+            </div>
+          </div>
+        </div>
+        <div className="p-6">
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Give your habit a name"
+            className="w-full px-4 py-3 mb-4 rounded-xl bg-slate-700/30 text-white border border-slate-600/30 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && name.trim()) {
+                onAdd({ name, color });
+              }
+            }}
+          />
+          <p className="text-sm text-slate-400 mb-3">Choose a color:</p>
+          <ColorSwatchGroup value={color} onChange={setColor} />
+          {!name && (
+            <p className="text-red-400 text-sm mt-4 text-center">
+              Please write a name for the habit.
+            </p>
+          )}
+          <div className="flex justify-end gap-3 mt-6">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 rounded-xl bg-slate-700/50 hover:bg-slate-700 text-white transition-colors border border-slate-600/50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => onAdd({ name, color })}
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 hover:from-indigo-500 hover:via-blue-500 hover:to-cyan-500 text-white shadow-lg shadow-indigo-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!name}
+            >
+              Add Habit
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -188,23 +268,27 @@ function ConfirmModal({
 }) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-      <div className="bg-gray-900 p-6 rounded-lg shadow-lg text-center">
-        <h4 className="text-lg font-semibold mb-4">{title}</h4>
-        <p className="mb-6">{message}</p>
-        <div className="flex justify-center gap-4">
-          <button
-            onClick={onConfirm}
-            className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded text-white"
-          >
-            Delete
-          </button>
-          <button
-            onClick={onCancel}
-            className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded text-white"
-          >
-            Cancel
-          </button>
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+      <div className="bg-gradient-to-br from-slate-800/95 via-slate-800/90 to-slate-800/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 w-full max-w-md overflow-hidden">
+        <div className="p-6 border-b border-slate-700/50 bg-gradient-to-r from-red-600/10 to-rose-600/10">
+          <h4 className="text-xl font-bold text-white mb-2">{title}</h4>
+          <p className="text-slate-400">{message}</p>
+        </div>
+        <div className="p-6">
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={onCancel}
+              className="px-4 py-2 rounded-xl bg-slate-700/50 hover:bg-slate-700 text-white transition-colors border border-slate-600/50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onConfirm}
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white shadow-lg shadow-red-500/30 transition-all"
+            >
+              Delete
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -214,28 +298,33 @@ function ConfirmModal({
 function NoteModal({ open, habit, note, onChange, onClose, onSave }) {
   if (!open || !habit) return null;
   return (
-    <div className="fixed inset-0 bg-black p-4 bg-opacity-60 flex items-center justify-center z-50">
-      <div className="bg-gray-900 p-6 rounded-lg shadow-lg w-96 text-white">
-        <h4 className="text-lg font-semibold mb-4">Habit: {habit.name}</h4>
-        <textarea
-          className="w-full h-32 p-2 bg-gray-800 text-white rounded border border-gray-700 focus:border-purple-500 outline-none"
-          placeholder="Write a note for this habit..."
-          value={note}
-          onChange={(e) => onChange(e.target.value)}
-        />
-        <div className="flex justify-end mt-4 gap-2">
-          <button
-            className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded"
-            onClick={onClose}
-          >
-            Close
-          </button>
-          <button
-            className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded"
-            onClick={onSave}
-          >
-            Save Note
-          </button>
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+      <div className="bg-gradient-to-br from-slate-800/95 via-slate-800/90 to-slate-800/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 w-full max-w-md overflow-hidden">
+        <div className="p-6 border-b border-slate-700/50 bg-gradient-to-r from-indigo-600/10 via-blue-600/10 to-cyan-600/10">
+          <h4 className="text-xl font-bold text-white mb-1">Habit Note</h4>
+          <p className="text-slate-400 text-sm">{habit.name}</p>
+        </div>
+        <div className="p-6">
+          <textarea
+            className="w-full h-32 p-4 bg-slate-700/30 text-white rounded-xl border border-slate-600/30 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50 outline-none resize-none transition-all"
+            placeholder="Write a note for this habit..."
+            value={note}
+            onChange={(e) => onChange(e.target.value)}
+          />
+          <div className="flex justify-end mt-6 gap-3">
+            <button
+              className="px-4 py-2 rounded-xl bg-slate-700/50 hover:bg-slate-700 text-white transition-colors border border-slate-600/50"
+              onClick={onClose}
+            >
+              Cancel
+            </button>
+            <button
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 hover:from-indigo-500 hover:via-blue-500 hover:to-cyan-500 text-white shadow-lg shadow-indigo-500/30 transition-all"
+              onClick={onSave}
+            >
+              Save Note
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -562,32 +651,67 @@ export default function DailylogPage() {
   const totalHabits = habits.length;
 
   return (
-    <div className="min-h-screen text-white p-6 rounded-lg max-w-xl mx-auto relative">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950/20 to-slate-950">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,_rgba(99,102,241,0.15)_1px,_transparent_0)] bg-[size:24px_24px] opacity-40"></div>
+      
+      <div className="relative z-10 max-w-2xl mx-auto px-6 py-12">
+        {/* Header Section */}
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 via-blue-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-indigo-500/50">
+              <CalendarIcon className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-bold text-gradient-vibrant">Daily Log</h1>
+              <p className="text-slate-400 text-lg mt-1">
+                Track your habits day by day
+              </p>
+            </div>
+          </div>
 
-      <DateNavigator
-        selectedDate={selectedDate}
-        onChange={setSelectedDate}
-        dotForDate={(d) => statusByDate[d]} // calendar dots restored
-      />
+          <DateNavigator
+            selectedDate={selectedDate}
+            onChange={setSelectedDate}
+            dotForDate={(d) => statusByDate[d]} // calendar dots restored
+          />
+        </div>
 
-      <h3 className="text-xl font-bold mb-4">
-        Habits for {selectedDate.format("DD MMM YYYY")}
-      </h3>
-      <ProgressSummary completed={completedCount} total={totalHabits} />
+        {/* Progress Summary Card */}
+        <div className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-800/40 backdrop-blur-xl rounded-2xl border border-slate-700/50 shadow-2xl shadow-indigo-900/20 p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-white">
+              {selectedDate.format("dddd, MMMM D, YYYY")}
+            </h2>
+            <div className="text-sm text-slate-400">
+              {selectedDate.isSame(dayjs(), 'day') ? "Today" : selectedDate.isBefore(dayjs(), 'day') ? "Past" : "Future"}
+            </div>
+          </div>
+          <ProgressSummary completed={completedCount} total={totalHabits} />
+        </div>
 
-      {/* Add Habit */}
-      <button
-        className="w-full border-dashed border-2 border-gray-600 p-4 text-center rounded cursor-pointer text-gray-400"
-        onClick={() => setShowAddModal(true)}
-      >
-        Add a new habit <PlusIcon className="inline w-4 h-4" />
-      </button>
+        {/* Add Habit Button */}
+        <button
+          className="w-full border-dashed border-2 border-slate-600/50 hover:border-indigo-500/50 bg-slate-800/20 hover:bg-slate-800/40 p-6 text-center rounded-xl cursor-pointer text-slate-300 hover:text-white transition-all duration-300 mb-6 group"
+          onClick={() => setShowAddModal(true)}
+        >
+          <div className="flex items-center justify-center gap-2">
+            <PlusIcon className="w-5 h-5 group-hover:scale-110 transition-transform" />
+            <span className="font-medium">Add a new habit</span>
+          </div>
+        </button>
 
-      {/* Habit List with dnd-kit */}
-      <div className="space-y-3 mt-4">
-        {habits.length === 0 ? (
-          <p className="text-gray-500 text-center">No habits found.</p>
-        ) : (
+        {/* Habit List with dnd-kit */}
+        <div className="space-y-3">
+          {habits.length === 0 ? (
+            <div className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-800/40 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-12 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-700/30 flex items-center justify-center">
+                <PlusIcon className="w-8 h-8 text-slate-500" />
+              </div>
+              <p className="text-slate-400 text-lg mb-2">No habits for this day</p>
+              <p className="text-slate-500 text-sm">Add your first habit to get started!</p>
+            </div>
+          ) : (
           <DndContext
             sensors={dragSensors}
             collisionDetection={closestCenter}
@@ -616,7 +740,8 @@ export default function DailylogPage() {
               ))}
             </SortableContext>
           </DndContext>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Modals */}

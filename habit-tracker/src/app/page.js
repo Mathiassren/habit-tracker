@@ -126,7 +126,7 @@ export default function Home() {
         className="mb-6 text-center"
       >
         <h1 className="text-5xl font-extrabold tracking-wide">
-          <span className="bg-gradient-to-r from-[#2980B9] via-[#6DD5FA] to-[#FFFFFF] bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-indigo-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent">
             Habify
           </span>
         </h1>

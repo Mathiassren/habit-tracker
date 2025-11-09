@@ -65,7 +65,7 @@ export default function HabitHeatmap({
 
   // Handle heat field click
   const handleHeatFieldClick = async (value) => {
-    if (value && value.count > 0) {
+    if (value && value.date) {
       setSelectedDate(value.date);
       await fetchHabitDetails(value.date);
     }
@@ -130,14 +130,19 @@ export default function HabitHeatmap({
 
   return (
     <section className="select-none">
-      <h3 className="font-play font-bold text-xl mb-2">{title}</h3>
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-2xl font-bold text-white">{title}</h3>
+        <div className="text-sm text-slate-400">
+          Click any square to view details
+        </div>
+      </div>
       <ActivityCalendar
         data={data} // Jan 1 → today
         startDate={startISO}
         endDate={endISO}
         weekStart={weekStart}
-        blockSize={11}
-        blockMargin={2}
+        blockSize={14}
+        blockMargin={3}
         fontSize={12}
         colorScheme="dark"
         hideTotalCount={false}
@@ -161,28 +166,40 @@ export default function HabitHeatmap({
           weekDays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
         }}
         theme={{
-          dark: ["#27272a", "#4c1d95", "#5b21b6", "#6d28d9", "#a78bfa"],
-          light: ["#27272a", "#4c1d95", "#5b21b6", "#6d28d9", "#a78bfa"],
+          dark: ["#27272a", "#312e81", "#4338ca", "#6366f1", "#818cf8"],
+          light: ["#27272a", "#312e81", "#4338ca", "#6366f1", "#818cf8"],
         }}
-        tooltipDataAttrs={(val) => ({
-          "data-tip": `${val.date}: ${val.count} completion${
+        tooltipDataAttrs={(val) => {
+          const date = new Date(val.date);
+          const formattedDate = date.toLocaleDateString('en-US', {
+            weekday: 'short',
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+          });
+          const tooltipText = `${formattedDate}: ${val.count} completion${
             val.count === 1 ? "" : "s"
-          }`,
-        })}
+          }`;
+          return {
+            "data-tip": tooltipText,
+            "title": tooltipText,
+          };
+        }}
         showWeekdayLabels={false}
         onClick={handleHeatFieldClick}
       />
-      <AnalyticsPage className="p-0" />
 
       {/* Habit Details Modal */}
       {selectedDate && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-900 rounded-2xl shadow-2xl border border-white/10 w-full max-w-md max-h-[80vh] overflow-hidden">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+          <div className="bg-gradient-to-br from-slate-800/95 via-slate-800/90 to-slate-800/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 w-full max-w-md max-h-[80vh] overflow-hidden">
             {/* Modal Header */}
-            <div className="p-6 border-b border-white/10">
+            <div className="p-6 border-b border-slate-700/50 bg-gradient-to-r from-indigo-600/10 via-blue-600/10 to-cyan-600/10">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Calendar className="w-6 h-6 text-purple-400" />
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-blue-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-indigo-500/50">
+                    <Calendar className="w-5 h-5 text-white" />
+                  </div>
                   <div>
                     <h3 className="text-xl font-bold text-white">
                       {new Date(selectedDate).toLocaleDateString('en-US', {
@@ -199,7 +216,7 @@ export default function HabitHeatmap({
                 </div>
                 <button
                   onClick={closeModal}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-700/50 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors border border-slate-600/50"
                 >
                   <X size={20} />
                 </button>
@@ -210,41 +227,44 @@ export default function HabitHeatmap({
             <div className="p-6 max-h-96 overflow-y-auto">
               {loading ? (
                 <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
                 </div>
               ) : habitDetails.length === 0 ? (
                 <div className="text-center py-8">
-                  <p className="text-gray-400">No habits completed on this date</p>
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-700/30 flex items-center justify-center">
+                    <Calendar className="w-8 h-8 text-slate-500" />
+                  </div>
+                  <p className="text-slate-400">No habits completed on this date</p>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {habitDetails.map((completion, index) => (
                     <div
                       key={index}
-                      className="flex items-center gap-3 p-3 bg-gray-800/50 rounded-lg border border-white/5"
+                      className="flex items-center gap-3 p-4 bg-slate-700/30 rounded-xl border border-slate-600/30 hover:border-indigo-500/30 transition-colors"
                     >
-                      <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center">
-                        <CheckCircle className="w-5 h-5 text-green-400" />
+                      <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">
+                        <CheckCircle className="w-5 h-5 text-emerald-400" />
                       </div>
-                      <div className="flex-1">
-                        <h4 className="text-white font-medium">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-white font-semibold mb-1">
                           {completion.habits?.name || 'Unknown Habit'}
                         </h4>
-                        <p className="text-gray-400 text-sm">
+                        <p className="text-slate-400 text-sm">
                           Completed at {new Date(completion.completed_at).toLocaleTimeString('en-US', {
                             hour: '2-digit',
                             minute: '2-digit'
                           })}
                         </p>
                         {completion.habits?.note && (
-                          <p className="text-gray-500 text-xs mt-1 italic">
+                          <p className="text-slate-500 text-xs mt-2 italic border-l-2 border-indigo-500/30 pl-2">
                             "{completion.habits.note}"
                           </p>
                         )}
                       </div>
                       {completion.habits?.color && (
                         <div
-                          className="w-4 h-4 rounded-full"
+                          className="w-5 h-5 rounded-full border-2 border-slate-600 shadow-sm flex-shrink-0"
                           style={{ backgroundColor: completion.habits.color }}
                         />
                       )}

@@ -115,26 +115,26 @@ function MiniMonth({ month, highlighted = new Set(), onChangeMonth }) {
   }
 
   return (
-    <div className="w-full max-w-xs">
-      <div className="flex items-center justify-between mb-2 text-sm text-gray-300">
+    <div className="w-full">
+      <div className="flex items-center justify-between mb-3 text-sm text-white">
         <button
-          className="px-2 py-1 rounded hover:bg-gray-800"
+          className="px-2 py-1 rounded-lg hover:bg-slate-700/50 transition-colors text-slate-400 hover:text-white"
           onClick={() => onChangeMonth(month.subtract(1, "month"))}
         >
           &lt;
         </button>
-        <div className="font-semibold">{month.format("MMMM YYYY")}</div>
+        <div className="font-semibold text-sm">{month.format("MMMM YYYY")}</div>
         <button
-          className="px-2 py-1 rounded hover:bg-gray-800"
+          className="px-2 py-1 rounded-lg hover:bg-slate-700/50 transition-colors text-slate-400 hover:text-white"
           onClick={() => onChangeMonth(month.add(1, "month"))}
         >
           &gt;
         </button>
       </div>
 
-      <div className="grid grid-cols-7 text-xs text-gray-500 mb-1">
+      <div className="grid grid-cols-7 text-xs text-slate-500 mb-2">
         {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
-          <div key={d} className="text-center py-1">
+          <div key={d} className="text-center py-1 text-xs">
             {d}
           </div>
         ))}
@@ -144,16 +144,15 @@ function MiniMonth({ month, highlighted = new Set(), onChangeMonth }) {
         {rows.flat().map((c) => (
           <div
             key={c.iso}
-            className={`relative h-9 rounded-md text-sm ${
-              c.inMonth ? "text-gray-200" : "text-gray-600"
-            } flex items-center justify-center`} // center contents
+            className={`relative h-8 rounded-md text-xs ${
+              c.inMonth ? "text-white" : "text-slate-600"
+            } flex items-center justify-center`}
           >
             <div className="relative inline-flex flex-col items-center leading-none">
-              <span className="leading-none">{c.day}</span>
+              <span className="leading-none text-xs">{c.day}</span>
               {c.hit && (
                 <span
-                  className="absolute -bottom-3 left-2.5 -translate-x-1/2 w-2 h-2 rounded-full"
-                  style={{ backgroundColor: "#9333EA" }}
+                  className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-indigo-500"
                 />
               )}
             </div>
@@ -342,22 +341,12 @@ export default function HabitAnalytics() {
 
   return (
     <section className="w-full text-gray-100">
-      <div className="grid grid-cols-1 lg:grid-cols-[280px,1fr] gap-8">
-        {/* Left: calendar */}
-        <div className="space-y-6">
-          <div className="flex items-center pt-10 gap-2">
-            <span
-              className="inline-block w-3 h-3 rounded-sm"
-              style={{ backgroundColor: "#C084FC" }}
-            />
-            <h2 className="font-play text-3xl font-extrabold tracking-wide">
-              Analytics
-            </h2>
-          </div>
-
+      <div className="space-y-6">
+        {/* Calendar */}
+        <div className="space-y-4">
           <div>
-            <h3 className="text-sm font-mono text-gray-300 mb-2">
-              Selected time frame
+            <h3 className="text-sm font-semibold text-slate-400 mb-3 uppercase tracking-wider">
+              Selected Month
             </h3>
             <MiniMonth
               month={month}
@@ -367,162 +356,109 @@ export default function HabitAnalytics() {
           </div>
         </div>
 
-        {/* Right: cards */}
-        <div className="space-y-6">
-          <h3 className="font-mono text-lg text-gray-300">Analytics</h3>
-
-          <div className="grid md:grid-cols-3 gap-5">
+          {/* Stats Grid - Single column for sidebar */}
+          <div className="space-y-4">
             {/* Current streak */}
-            <div className="rounded-2xl bg-[#0b0b0f] border border-gray-800 p-5">
-              <div className="text-4xl font-extrabold">
-                {streaks.current}
-                <span className="text-sm font-normal ml-1">Days</span>
+            <div className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-800/40 backdrop-blur-xl rounded-xl border border-slate-700/50 p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-3xl font-bold text-white">
+                    {streaks.current}
+                    <span className="text-sm font-normal ml-1 text-slate-400">Days</span>
+                  </div>
+                  <div className="text-xs text-slate-400 mt-1 uppercase tracking-wider">Current Streak</div>
+                </div>
+                <div className="w-12 h-12 rounded-lg bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30">
+                  <span className="text-indigo-400 text-xl">🔥</span>
+                </div>
               </div>
-              <div className="text-sm text-gray-400 mt-1">Current Streak</div>
             </div>
 
             {/* Longest streak */}
-            <div className="rounded-2xl bg-[#0b0b0f] border border-gray-800 p-5">
-              <div className="text-4xl font-extrabold">
-                {streaks.longest}
-                <span className="text-sm font-normal ml-1">Days</span>
-              </div>
-              <div className="text-sm text-gray-400 mt-1">Longest Streak</div>
-            </div>
-
-            {/* Completed in YEAR + sparkline */}
-            <div className="rounded-2xl bg-[#0b0b0f] border border-gray-800 p-5">
-              <div className="text-4xl font-extrabold">
-                {yearCompletedDays}
-                <span className="text-sm font-normal ml-1">Days</span>
-              </div>
-              <div className="text-sm text-gray-400 mt-1">
-                Completed in {year}
-              </div>
-              <div className="mt-3">
-                <TinyArea data={yearSpark} />
-              </div>
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-5">
-            {/* Monthly consistency donut */}
-            <div className="rounded-2xl bg-[#0b0b0f] border border-gray-800 p-5 flex items-center gap-4">
-              <svg width="54" height="54" viewBox="0 0 54 54">
-                <circle
-                  cx="27"
-                  cy="27"
-                  r={donutMonth.r}
-                  stroke="#A855F7"
-                  strokeWidth="6"
-                  fill="none"
-                />
-                <circle
-                  cx="27"
-                  cy="27"
-                  r={donutMonth.r}
-                  stroke="#7E22CE"
-                  strokeWidth="6"
-                  strokeDasharray={`${donutMonth.dash} ${donutMonth.c}`}
-                  strokeLinecap="round"
-                  fill="none"
-                  transform="rotate(-90 27 27)"
-                />
-              </svg>
-              <div>
-                <div className="text-3xl font-extrabold">
-                  {monthConsistencyPct}
-                  <span className="text-sm font-normal">%</span>
+            <div className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-800/40 backdrop-blur-xl rounded-xl border border-slate-700/50 p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-3xl font-bold text-white">
+                    {streaks.longest}
+                    <span className="text-sm font-normal ml-1 text-slate-400">Days</span>
+                  </div>
+                  <div className="text-xs text-slate-400 mt-1 uppercase tracking-wider">Longest Streak</div>
                 </div>
-                <div className="text-sm text-gray-400">Monthly Consistency</div>
+                <div className="w-12 h-12 rounded-lg bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">
+                  <span className="text-emerald-400 text-xl">⭐</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Monthly consistency */}
+            <div className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-800/40 backdrop-blur-xl rounded-xl border border-slate-700/50 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-xs text-slate-400 uppercase tracking-wider">Monthly Consistency</div>
+                <div className="text-2xl font-bold text-white">
+                  {monthConsistencyPct}%
+                </div>
+              </div>
+              <div className="w-full h-2 bg-slate-700/50 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-indigo-500 to-blue-500 rounded-full transition-all duration-500"
+                  style={{ width: `${monthConsistencyPct}%` }}
+                />
               </div>
             </div>
 
             {/* Completed this week */}
-            <div className="rounded-2xl bg-[#0b0b0f] border border-gray-800 p-5">
-              <div className="text-4xl font-extrabold">
-                {
-                  // count days with any completion in current ISO week
-                  rangeDays(
-                    dayjs().startOf("isoWeek").format("YYYY-MM-DD"),
-                    dayjs().endOf("isoWeek").format("YYYY-MM-DD")
-                  ).filter((d) => (byDay[d] || 0) > 0).length
-                }
-                <span className="text-sm font-normal ml-1">Days</span>
-              </div>
-              <div className="text-sm text-gray-400 mt-1">
-                Completed this week
-              </div>
-            </div>
-
-            {/* Completed in selected month + sparkline */}
-            <div className="rounded-2xl bg-[#0b0b0f] border border-gray-800 p-5">
-              <div className="text-4xl font-extrabold">
-                {monthCompletedDays}
-                <span className="text-sm font-normal ml-1">Days</span>
-              </div>
-              <div className="text-sm text-gray-400 mt-1">
-                Completed in {month.format("MMMM")}
-              </div>
-              <div className="mt-3">
-                <TinyArea data={monthSpark} />
-              </div>
-            </div>
-          </div>
-
-          <h3 className="font-mono text-lg text-gray-300">Reports</h3>
-
-          <div className="grid md:grid-cols-3 gap-5">
-            <div className="rounded-2xl bg-[#0b0b0f] border border-gray-800 p-5">
-              <div className="text-4xl font-extrabold">
-                {monthCompletedDays}
-                <span className="text-sm font-normal ml-1">Days</span>
-              </div>
-              <div className="text-sm text-gray-400 mt-1">
-                in {month.format("MMMM")}
-              </div>
-            </div>
-
-            <div className="rounded-2xl bg-[#0b0b0f] border border-gray-800 p-5">
-              <div className="text-4xl font-extrabold">
-                {yearCompletedDays}
-                <span className="text-sm font-normal ml-1">Days</span>
-              </div>
-              <div className="text-sm text-gray-400 mt-1">in Total</div>
-            </div>
-
-            <div className="rounded-2xl bg-[#0b0b0f] border border-gray-800 p-5 flex items-center gap-4">
-              <svg width="54" height="54" viewBox="0 0 54 54">
-                <circle
-                  cx="27"
-                  cy="27"
-                  r={donutOverall.r}
-                  stroke="#A855F7"
-                  strokeWidth="6"
-                  fill="none"
-                />
-                <circle
-                  cx="27"
-                  cy="27"
-                  r={donutOverall.r}
-                  stroke="#7E22CE "
-                  strokeWidth="6"
-                  strokeDasharray={`${donutOverall.dash} ${donutOverall.c}`}
-                  strokeLinecap="round"
-                  fill="none"
-                  transform="rotate(-90 27 27)"
-                />
-              </svg>
-              <div>
-                <div className="text-3xl font-extrabold">
-                  {overallRatePct}
-                  <span className="text-sm font-normal">%</span>
+            <div className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-800/40 backdrop-blur-xl rounded-xl border border-slate-700/50 p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-3xl font-bold text-white">
+                    {rangeDays(
+                      dayjs().startOf("isoWeek").format("YYYY-MM-DD"),
+                      dayjs().endOf("isoWeek").format("YYYY-MM-DD")
+                    ).filter((d) => (byDay[d] || 0) > 0).length}
+                    <span className="text-sm font-normal ml-1 text-slate-400">Days</span>
+                  </div>
+                  <div className="text-xs text-slate-400 mt-1 uppercase tracking-wider">This Week</div>
                 </div>
-                <div className="text-sm text-gray-400">Overall Rate</div>
+                <div className="w-12 h-12 rounded-lg bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30">
+                  <span className="text-cyan-400 text-xl">📅</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Completed in month */}
+            <div className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-800/40 backdrop-blur-xl rounded-xl border border-slate-700/50 p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex-1 min-w-0">
+                  <div className="text-3xl font-bold text-white">
+                    {monthCompletedDays}
+                    <span className="text-sm font-normal ml-1 text-slate-400">Days</span>
+                  </div>
+                  <div className="text-xs text-slate-400 mt-1 uppercase tracking-wider truncate">
+                    In {month.format("MMMM")}
+                  </div>
+                </div>
+                <div className="w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center border border-blue-500/30 ml-3">
+                  <span className="text-blue-400 text-xl">📊</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Overall rate */}
+            <div className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-800/40 backdrop-blur-xl rounded-xl border border-slate-700/50 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-xs text-slate-400 uppercase tracking-wider">Overall Rate</div>
+                <div className="text-2xl font-bold text-white">
+                  {overallRatePct}%
+                </div>
+              </div>
+              <div className="w-full h-2 bg-slate-700/50 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-cyan-500 to-emerald-500 rounded-full transition-all duration-500"
+                  style={{ width: `${overallRatePct}%` }}
+                />
               </div>
             </div>
           </div>
-        </div>
       </div>
     </section>
   );
