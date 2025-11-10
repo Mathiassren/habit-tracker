@@ -34,10 +34,12 @@ export default function HabitHeatmap({
     
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // Try querying by completed_on first
+      let { data, error } = await supabase
         .from("habit_completions")
         .select(`
           completed_at,
+          completed_on,
           habits (
             id,
             name,
@@ -49,9 +51,34 @@ export default function HabitHeatmap({
         .eq("completed_on", date)
         .order("completed_at", { ascending: true });
 
-      if (error) {
-        console.error("Error fetching habit details:", error);
-        setHabitDetails([]);
+      // If no results or error, try fallback using completed_at date range
+      if (error || !data || data.length === 0) {
+        const start = new Date(`${date}T00:00:00`).toISOString();
+        const end = new Date(`${date}T23:59:59.999`).toISOString();
+        
+        const res2 = await supabase
+          .from("habit_completions")
+          .select(`
+            completed_at,
+            completed_on,
+            habits (
+              id,
+              name,
+              color,
+              note
+            )
+          `)
+          .eq("user_id", userId)
+          .gte("completed_at", start)
+          .lte("completed_at", end)
+          .order("completed_at", { ascending: true });
+        
+        if (res2.error) {
+          console.error("Error fetching habit details (fallback):", res2.error);
+          setHabitDetails([]);
+        } else {
+          setHabitDetails(res2.data || []);
+        }
       } else {
         setHabitDetails(data || []);
       }
@@ -68,7 +95,14 @@ export default function HabitHeatmap({
     if (!value) return;
     
     // Handle different value formats from react-activity-calendar
-    const dateStr = value.date || value;
+    // The value can be an object with {date, count, level} or just a date string
+    let dateStr = null;
+    
+    if (typeof value === 'object' && value !== null) {
+      dateStr = value.date || value.dateStr || value;
+    } else if (typeof value === 'string') {
+      dateStr = value;
+    }
     
     if (!dateStr) {
       console.warn("No date found in click value:", value);
@@ -85,6 +119,9 @@ export default function HabitHeatmap({
         const parsed = new Date(dateStr);
         if (!isNaN(parsed.getTime())) {
           formattedDate = toISO(parsed);
+        } else {
+          console.warn("Could not parse date:", dateStr);
+          return;
         }
       }
     }
@@ -204,9 +241,9 @@ export default function HabitHeatmap({
               month: 'short',
               day: 'numeric'
             });
-            const tooltipText = `${formattedDate}: ${val.count} completion${
-              val.count === 1 ? "" : "s"
-            }`;
+            const tooltipText = val.count > 0 
+              ? `${formattedDate}: ${val.count} habit${val.count === 1 ? "" : "s"} completed\nClick to see details`
+              : `${formattedDate}: No completions\nClick to view`;
             return {
               "data-tip": tooltipText,
               "title": tooltipText,
@@ -266,38 +303,47 @@ export default function HabitHeatmap({
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {habitDetails.map((completion, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center gap-3 p-4 bg-slate-700/30 rounded-xl border border-slate-600/30 hover:border-indigo-500/30 transition-colors"
-                    >
-                      <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">
-                        <CheckCircle className="w-5 h-5 text-emerald-400" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-white font-semibold mb-1">
-                          {completion.habits?.name || 'Unknown Habit'}
-                        </h4>
-                        <p className="text-slate-400 text-sm">
-                          Completed at {new Date(completion.completed_at).toLocaleTimeString(navigator.language || undefined, {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </p>
-                        {completion.habits?.note && (
-                          <p className="text-slate-500 text-xs mt-2 italic border-l-2 border-indigo-500/30 pl-2">
-                            "{completion.habits.note}"
+                  {habitDetails.map((completion, index) => {
+                    // Handle both object and array formats from Supabase join
+                    const habit = Array.isArray(completion.habits) 
+                      ? completion.habits[0] 
+                      : completion.habits;
+                    
+                    return (
+                      <div
+                        key={completion.id || index}
+                        className="flex items-center gap-3 p-4 bg-slate-700/30 rounded-xl border border-slate-600/30 hover:border-indigo-500/30 transition-colors"
+                      >
+                        <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">
+                          <CheckCircle className="w-5 h-5 text-emerald-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-white font-semibold mb-1">
+                            {habit?.name || 'Unknown Habit'}
+                          </h4>
+                          <p className="text-slate-400 text-sm">
+                            {completion.completed_at 
+                              ? `Completed at ${new Date(completion.completed_at).toLocaleTimeString(navigator.language || undefined, {
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}`
+                              : 'Completion time not available'}
                           </p>
+                          {habit?.note && (
+                            <p className="text-slate-500 text-xs mt-2 italic border-l-2 border-indigo-500/30 pl-2">
+                              "{habit.note}"
+                            </p>
+                          )}
+                        </div>
+                        {habit?.color && (
+                          <div
+                            className="w-5 h-5 rounded-full border-2 border-slate-600 shadow-sm flex-shrink-0"
+                            style={{ backgroundColor: habit.color }}
+                          />
                         )}
                       </div>
-                      {completion.habits?.color && (
-                        <div
-                          className="w-5 h-5 rounded-full border-2 border-slate-600 shadow-sm flex-shrink-0"
-                          style={{ backgroundColor: completion.habits.color }}
-                        />
-                      )}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>

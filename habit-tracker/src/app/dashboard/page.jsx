@@ -11,6 +11,7 @@ import {
   AdjustmentsHorizontalIcon,
   BookOpenIcon,
 } from "@heroicons/react/24/outline";
+import { Trophy } from "lucide-react";
 
 const navigationCards = [
   {
@@ -40,6 +41,13 @@ const navigationCards = [
     label: "Analytics",
     gradient: "from-blue-500 to-cyan-500",
     description: "View your progress"
+  },
+  {
+    href: "/leaderboard",
+    icon: Trophy,
+    label: "Leaderboard",
+    gradient: "from-yellow-500 to-amber-500",
+    description: "Compete with others"
   },
   {
     href: "/preferences",

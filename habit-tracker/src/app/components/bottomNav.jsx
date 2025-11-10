@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/hooks/useAuth";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Home, Settings } from "lucide-react";
+import { LayoutDashboard, Home, Settings, Trophy } from "lucide-react";
 import Link from "next/link";
 
 export default function BottomNav() {
@@ -14,7 +14,8 @@ export default function BottomNav() {
     <nav className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 border border-indigo-800 p-2 shadow-lg rounded-2xl bg-gray-900">
       <ul className="flex justify-around text-white">
         <NavItem href="/dashboard" pathname={pathname} icon={LayoutDashboard} />
-        <NavItem href="/dashboard" pathname={pathname} icon={Home} />
+        <NavItem href="/heatmap" pathname={pathname} icon={Home} />
+        <NavItem href="/leaderboard" pathname={pathname} icon={Trophy} />
         <NavItem href="/preferences" pathname={pathname} icon={Settings} />
       </ul>
     </nav>

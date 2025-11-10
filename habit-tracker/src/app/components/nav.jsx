@@ -3,7 +3,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
-import { Menu, X, Home, BarChart3, Calendar, Settings, BookOpen, LogOut, User } from "lucide-react";
+import { Menu, X, Home, BarChart3, Calendar, Settings, BookOpen, LogOut, User, Trophy } from "lucide-react";
 import Link from "next/link";
 import Logo from "./Logo";
 
@@ -21,6 +21,7 @@ export default function Nav() {
     { href: "/heatmap", label: "Analytics", icon: BarChart3 },
     { href: "/dailylog", label: "Daily Log", icon: Calendar },
     { href: "/journal", label: "Journal", icon: BookOpen },
+    { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
     { href: "/preferences", label: "Preferences", icon: Settings },
   ];
 

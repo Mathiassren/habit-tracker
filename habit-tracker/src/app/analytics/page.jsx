@@ -13,10 +13,10 @@ const HabitAnalytics = dynamic(
   }
 );
 
-export default function AnalyticsPage({ className = "" }) {
+export default function AnalyticsPage({ className = "", compact = false, belowHeatmap = false }) {
   return (
     <div className={twMerge("p-8", className)}>
-      <HabitAnalytics className={className} /> {/* optional: pass down */}
+      <HabitAnalytics className={className} compact={compact} belowHeatmap={belowHeatmap} />
     </div>
   );
 }

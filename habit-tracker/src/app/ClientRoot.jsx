@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { supabase } from "../services/supabase"; // -> re-exports browser client
 import Nav from "../app/components/nav";
 import { Toaster } from "react-hot-toast";
-import StartupAnimation from "../app/components/StartupAnimation";
 
 export default function ClientRoot({ children, user }) {
   const [mounted, setMounted] = useState(false);
@@ -55,9 +54,6 @@ export default function ClientRoot({ children, user }) {
 
   return (
     <>
-      {/* Startup Animation */}
-      {mounted && <StartupAnimation />}
-      
       {/* hydration-safe: render placeholder on SSR, real Nav after mount */}
       <div suppressHydrationWarning style={{ position: 'relative', zIndex: 9999 }}>
         {mounted ? <Nav /> : <nav className="p-4" />}

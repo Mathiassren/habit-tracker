@@ -27,43 +27,46 @@ export function useHeatmap(
     setLoading(true);
 
     try {
-      // Preferred: completed_on exists
-      let { data, error } = await supabase
+      // Fetch ALL completions for the user in the date range, regardless of completed_on
+      const start = new Date(`${sinceISO}T00:00:00`).toISOString();
+      const end = new Date(`${untilISO}T23:59:59.999`).toISOString();
+      
+      // Query using completed_at to ensure we get all records
+      const { data, error } = await supabase
         .from("habit_completions")
-        .select("completed_on, completed_at")
+        .select("completed_at, completed_on")
         .eq("user_id", userId)
-        .gte("completed_on", sinceISO)
-        .lte("completed_on", untilISO);
+        .gte("completed_at", start)
+        .lte("completed_at", end);
 
-      if (error || !Array.isArray(data)) {
-        // Fallback: use completed_at and derive day
-        const start = new Date(`${sinceISO}T00:00:00`).toISOString();
-        const end = new Date(`${untilISO}T23:59:59.999`).toISOString();
-        const res2 = await supabase
-          .from("habit_completions")
-          .select("completed_at")
-          .eq("user_id", userId)
-          .gte("completed_at", start)
-          .lte("completed_at", end);
-        if (res2.error) {
-          console.error("useHeatmap fetch error:", res2.error);
-          setRows([]);
+      if (error) {
+        console.error("useHeatmap fetch error:", error);
+        setRows([]);
+        setLoading(false);
+        return;
+      }
+
+      // Process all records - prefer completed_on if available, otherwise derive from completed_at
+      const counts = {};
+      for (const r of data || []) {
+        let day;
+        if (r.completed_on && isISO(r.completed_on)) {
+          day = r.completed_on;
+        } else if (r.completed_at) {
+          day = toLocalDay(r.completed_at, tz);
         } else {
-          const counts = {};
-          for (const r of res2.data || []) {
-            const day = toLocalDay(r.completed_at, tz);
-            counts[day] = (counts[day] || 0) + 1;
-          }
-          setRows(Object.entries(counts).map(([day, cnt]) => ({ day, cnt })));
+          continue; // Skip invalid records
         }
-      } else {
-        const counts = {};
-        for (const r of data || []) {
-          const day = r.completed_on || toLocalDay(r.completed_at, tz);
+        
+        // Only count days within our range
+        if (day >= sinceISO && day <= untilISO) {
           counts[day] = (counts[day] || 0) + 1;
         }
-        setRows(Object.entries(counts).map(([day, cnt]) => ({ day, cnt })));
       }
+      
+      const result = Object.entries(counts).map(([day, cnt]) => ({ day, cnt }));
+      console.log("Heatmap data loaded:", result.length, "days with completions");
+      setRows(result);
     } catch (e) {
       console.error("useHeatmap fetch exception:", e);
       setRows([]);
