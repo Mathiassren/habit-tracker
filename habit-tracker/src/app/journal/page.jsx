@@ -890,7 +890,7 @@ export default function JournalPage() {
                               e.stopPropagation();
                               openReadOnlyModal(entry);
                             }}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-white/10 rounded-lg"
+                            className="opacity-60 md:opacity-0 md:group-hover:opacity-100 transition-opacity p-1 hover:bg-white/10 rounded-lg active:opacity-100"
                             title="View Entry"
                           >
                             <Eye className="w-4 h-4 text-slate-400 hover:text-white" />
@@ -900,7 +900,7 @@ export default function JournalPage() {
                               e.stopPropagation();
                               deleteEntryById(entry.id, entry.date);
                             }}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-500/20 rounded-lg"
+                            className="opacity-60 md:opacity-0 md:group-hover:opacity-100 transition-opacity p-1 hover:bg-red-500/20 rounded-lg active:opacity-100"
                             title="Delete Entry"
                           >
                             <Trash2 className="w-4 h-4 text-red-400 hover:text-red-300" />
