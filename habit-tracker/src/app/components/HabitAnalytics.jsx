@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { supabase } from "@/services/supabase";
 import dayjs from "dayjs";
 import isoWeek from "dayjs/plugin/isoWeek";

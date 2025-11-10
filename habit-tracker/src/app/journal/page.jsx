@@ -7,7 +7,7 @@ import { Calendar, Save, Trash2, Edit3, BookOpen, Image as ImageIcon, X, Upload,
 import { DatePickerInput } from "@mantine/dates";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import Image from "next/image";
+import NextImage from "next/image";
 import toast from "react-hot-toast";
 
 dayjs.extend(relativeTime);
@@ -33,6 +33,8 @@ export default function JournalPage() {
   const [lastSavedAt, setLastSavedAt] = useState(null);
   const autoSaveTimeoutRef = useRef(null);
   const lastSavedContentRef = useRef("");
+  const lastSavedImageUrlRef = useRef("");
+  const uploadPromiseRef = useRef(null);
   
   // Edit mode state
   const [isEditMode, setIsEditMode] = useState(false);
@@ -69,6 +71,7 @@ export default function JournalPage() {
       setCurrentImageUrl(entry.image_url || "");
       setIsEditing(true);
       lastSavedContentRef.current = entry.content;
+      lastSavedImageUrlRef.current = entry.image_url || "";
       setLastSavedAt(new Date(entry.updated_at));
       setHasUnsavedChanges(false);
       setIsEditMode(false); // Start in read-only mode for existing entries
@@ -77,6 +80,7 @@ export default function JournalPage() {
       setCurrentImageUrl("");
       setIsEditing(false);
       lastSavedContentRef.current = "";
+      lastSavedImageUrlRef.current = "";
       setLastSavedAt(null);
       setHasUnsavedChanges(false);
       setIsEditMode(true); // Start in edit mode for new entries
@@ -89,40 +93,129 @@ export default function JournalPage() {
     return text.trim().split(/\s+/).filter(word => word.length > 0).length;
   };
 
+  // Compress and resize image
+  const compressImage = (file, maxWidth = 1920, quality = 0.85) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          // Resize if larger than maxWidth
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width;
+            width = maxWidth;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Convert to blob (JPEG format for better compression)
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                resolve(blob);
+              } else {
+                reject(new Error('Failed to compress image'));
+              }
+            },
+            'image/jpeg',
+            quality
+          );
+        };
+        img.onerror = reject;
+      };
+      reader.onerror = reject;
+    });
+  };
+
   // Handle image upload
   const handleImageUpload = async (file) => {
     if (!user || !file) return;
 
-    // Validate file size (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("Image size must be less than 10MB");
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error("Please select an image file");
       return;
     }
 
+    // Show immediate preview using FileReader
+    const previewReader = new FileReader();
+    previewReader.onload = (e) => {
+      setCurrentImageUrl(e.target.result);
+      setHasUnsavedChanges(true); // Mark as unsaved immediately
+    };
+    previewReader.readAsDataURL(file);
+
     setUploading(true);
-    try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-      
-      const { data, error } = await supabase.storage
-        .from('journal-images')
-        .upload(fileName, file);
+    
+    // Create upload promise and store it
+    const uploadPromise = (async () => {
+      try {
+        // Compress image before upload
+        let compressedFile = await compressImage(file);
+        
+        // Validate compressed file size (max 2MB after compression)
+        if (compressedFile.size > 2 * 1024 * 1024) {
+          // If still too large, compress more aggressively
+          const moreCompressed = await compressImage(file, 1280, 0.75);
+          if (moreCompressed.size > 2 * 1024 * 1024) {
+            toast.error("Image is too large. Please choose a smaller image.");
+            setCurrentImageUrl("");
+            setUploading(false);
+            uploadPromiseRef.current = null;
+            return null;
+          }
+          compressedFile = moreCompressed;
+        }
 
-      if (error) throw error;
+        const fileName = `${user.id}/${Date.now()}.jpg`;
+        
+        const { data, error } = await supabase.storage
+          .from('journal-images')
+          .upload(fileName, compressedFile, {
+            contentType: 'image/jpeg',
+            cacheControl: '3600',
+          });
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('journal-images')
-        .getPublicUrl(fileName);
+        if (error) throw error;
 
-      setCurrentImageUrl(publicUrl);
-      setHasUnsavedChanges(true);
-      toast.success("Image uploaded successfully");
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      toast.error("Failed to upload image. Please try again.");
-    } finally {
-      setUploading(false);
-    }
+        const { data: { publicUrl } } = supabase.storage
+          .from('journal-images')
+          .getPublicUrl(fileName);
+
+        // Update with actual URL from storage
+        setCurrentImageUrl(publicUrl);
+        return publicUrl;
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        toast.error("Failed to upload image. Please try again.");
+        setCurrentImageUrl("");
+        throw error;
+      } finally {
+        setUploading(false);
+        uploadPromiseRef.current = null;
+      }
+    })();
+    
+    uploadPromiseRef.current = uploadPromise;
+    
+    // Don't await - let it run in background
+    uploadPromise.then((url) => {
+      if (url) {
+        toast.success("Image uploaded successfully");
+      }
+    }).catch(() => {
+      // Error already handled in the promise
+    });
   };
 
   // Remove image
@@ -131,6 +224,10 @@ export default function JournalPage() {
     setCurrentImage(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
+    }
+    // Mark as having unsaved changes if there was an image before
+    if (lastSavedImageUrlRef.current) {
+      setHasUnsavedChanges(true);
     }
   };
 
@@ -146,27 +243,36 @@ export default function JournalPage() {
     setSelectedReadOnlyEntry(null);
   };
 
-  // Save journal entry (with auto-save support)
-  const saveEntry = useCallback(async (isAutoSave = false) => {
+  // Save journal entry (manual save only)
+  const saveEntry = useCallback(async () => {
     if (!user) return;
-    
-    // Don't auto-save empty entries
-    if (isAutoSave && !currentEntry.trim()) return;
-    
-    // Don't save if content hasn't changed
-    if (isAutoSave && currentEntry.trim() === lastSavedContentRef.current) {
+
+    // Don't save if there's nothing to save
+    if (!currentEntry.trim() && !currentImageUrl) {
+      setSaveStatus("idle");
       return;
     }
 
     setSaveStatus("saving");
     
     try {
+      // If image is still uploading (data URL), wait for upload to complete
+      let finalImageUrl = currentImageUrl;
+      if (currentImageUrl && currentImageUrl.startsWith('data:') && uploadPromiseRef.current) {
+        try {
+          finalImageUrl = await uploadPromiseRef.current;
+        } catch (error) {
+          // If upload failed, save without image or with data URL
+          console.warn('Image upload not completed, saving with preview URL');
+        }
+      }
+      
       const entryData = {
         user_id: user.id,
         date: selectedDate,
         content: currentEntry.trim(),
-        image_url: currentImageUrl || null,
-        image_alt: currentImageUrl ? `Journal image for ${selectedDate}` : null,
+        image_url: finalImageUrl || null,
+        image_alt: finalImageUrl ? `Journal image for ${selectedDate}` : null,
         updated_at: new Date().toISOString()
       };
 
@@ -191,15 +297,14 @@ export default function JournalPage() {
 
       await fetchEntries();
       lastSavedContentRef.current = currentEntry.trim();
+      lastSavedImageUrlRef.current = currentImageUrl || "";
       setLastSavedAt(new Date());
       setHasUnsavedChanges(false);
       setSaveStatus("saved");
       
-      // Exit edit mode after saving (unless it's an auto-save)
-      if (!isAutoSave) {
-        setIsEditMode(false);
-        toast.success("Entry saved successfully!");
-      }
+      // Exit edit mode after saving
+      setIsEditMode(false);
+      toast.success("Entry saved successfully!");
       
       // Reset saved status after 2 seconds
       setTimeout(() => {
@@ -217,40 +322,31 @@ export default function JournalPage() {
     }
   }, [user, currentEntry, selectedDate, currentImageUrl, isEditing]);
 
-  // Auto-save with debouncing (only when in edit mode)
+  // Track unsaved changes (no auto-save - manual save only)
   useEffect(() => {
-    // Only auto-save when in edit mode
+    // Only track changes when in edit mode
     if (!isEditMode) return;
     
-    // Clear existing timeout
+    // Clear any existing timeout
     if (autoSaveTimeoutRef.current) {
       clearTimeout(autoSaveTimeoutRef.current);
     }
 
-    // Don't auto-save if content hasn't changed
-    if (currentEntry.trim() === lastSavedContentRef.current) {
-      setHasUnsavedChanges(false);
-      return;
-    }
-
-    // Mark as having unsaved changes
-    if (currentEntry.trim()) {
-      setHasUnsavedChanges(true);
-    }
-
-    // Auto-save after 2 seconds of inactivity
-    if (currentEntry.trim()) {
-      autoSaveTimeoutRef.current = setTimeout(() => {
-        saveEntry(true);
-      }, 2000);
-    }
-
-    return () => {
-      if (autoSaveTimeoutRef.current) {
-        clearTimeout(autoSaveTimeoutRef.current);
+    // Check if both content and image are unchanged
+    const textChanged = currentEntry.trim() !== lastSavedContentRef.current;
+    const imageChanged = currentImageUrl !== lastSavedImageUrlRef.current;
+    
+    if (textChanged || imageChanged) {
+      // Mark as having unsaved changes if there's something to save
+      if (currentEntry.trim() || currentImageUrl) {
+        setHasUnsavedChanges(true);
+      } else {
+        setHasUnsavedChanges(false);
       }
-    };
-  }, [currentEntry, saveEntry, isEditMode]);
+    } else {
+      setHasUnsavedChanges(false);
+    }
+  }, [currentEntry, currentImageUrl, isEditMode]);
 
   // Handle keyboard shortcuts (only in edit mode)
   useEffect(() => {
@@ -260,8 +356,8 @@ export default function JournalPage() {
       // Ctrl+S or Cmd+S to save
       if ((e.ctrlKey || e.metaKey) && e.key === "s") {
         e.preventDefault();
-        if (currentEntry.trim()) {
-          saveEntry(false);
+        if (currentEntry.trim() || currentImageUrl) {
+          saveEntry();
         }
       }
       // Escape to exit edit mode (if no unsaved changes)
@@ -576,7 +672,7 @@ export default function JournalPage() {
                 {currentImageUrl ? (
                   <div className="relative group">
                     <div className="relative w-full min-h-48 max-h-96 rounded-2xl overflow-hidden bg-gray-800 flex items-center justify-center">
-                      <Image
+                      <NextImage
                         src={currentImageUrl}
                         alt="Journal image"
                         width={800}
@@ -615,7 +711,7 @@ export default function JournalPage() {
                           Click to upload an image
                         </p>
                         <p className="text-gray-500 text-sm mt-1">
-                          PNG, JPG, GIF up to 10MB
+                          Images are automatically optimized
                         </p>
                       </>
                     )}
@@ -647,7 +743,7 @@ export default function JournalPage() {
                   </div>
                   <div className="relative group">
                     <div className="relative w-full min-h-48 max-h-96 rounded-2xl overflow-hidden bg-gray-800 flex items-center justify-center">
-                      <Image
+                      <NextImage
                         src={currentImageUrl}
                         alt="Journal image"
                         width={800}
@@ -728,12 +824,12 @@ export default function JournalPage() {
                         <button
                           onClick={() => {
                             if (hasUnsavedChanges) {
-                              saveEntry(false);
+                              saveEntry();
                             } else {
                               setIsEditMode(false);
                             }
                           }}
-                          disabled={!currentEntry.trim() || uploading || saveStatus === "saving"}
+                          disabled={(!currentEntry.trim() && !currentImageUrl) || saveStatus === "saving"}
                           className="p-3 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-xl hover:from-indigo-500 hover:to-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-500/30 group"
                           title={hasUnsavedChanges ? (isEditing ? "Update Entry (Ctrl+S)" : "Save Entry (Ctrl+S)") : "Done"}
                         >
@@ -977,7 +1073,7 @@ export default function JournalPage() {
               >
                 <X size={24} />
               </button>
-              <Image
+              <NextImage
                 src={currentImageUrl}
                 alt="Journal image preview"
                 width={800}
@@ -1026,7 +1122,7 @@ export default function JournalPage() {
                   <div className="mb-6">
                     <div className="relative w-full rounded-2xl overflow-hidden bg-slate-800/50 border border-slate-700/50 p-4">
                       <div className="relative w-full min-h-64 max-h-[500px] rounded-xl overflow-hidden bg-slate-900/50 flex items-center justify-center">
-                        <Image
+                        <NextImage
                           src={selectedReadOnlyEntry.image_url}
                           alt={selectedReadOnlyEntry.image_alt || "Journal image"}
                           width={800}

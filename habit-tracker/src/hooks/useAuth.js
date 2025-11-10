@@ -58,7 +58,7 @@ export function useAuth() {
     
     if (error) {
       toast.error(error.message || "Failed to sign in with Google");
-      return;
+      throw error; // Re-throw so caller can handle it
     }
     
     // If in Capacitor and we have a URL, open it in the in-app browser
@@ -79,6 +79,9 @@ export function useAuth() {
         // This will still work but might open external browser
       }
     }
+    
+    // For web, Supabase will redirect automatically
+    // The loading state will persist until redirect happens
   };
 
   const logout = async () => {

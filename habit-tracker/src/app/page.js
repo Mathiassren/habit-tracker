@@ -298,10 +298,34 @@ export default function Home() {
             className="mt-4 w-full rounded-xl bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 hover:from-indigo-500 hover:via-blue-500 hover:to-cyan-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/50 transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:from-indigo-600 disabled:hover:via-blue-600 disabled:hover:to-cyan-600 transform hover:scale-[1.02] active:scale-[0.98]"
           >
             {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                {mode === "login" ? "Logging in…" : "Creating account…"}
-              </span>
+              <motion.span 
+                className="flex items-center justify-center gap-2"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
+              >
+                <motion.span 
+                  className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
+                  animate={{ rotate: 360 }}
+                  transition={{ 
+                    duration: 1, 
+                    repeat: Infinity, 
+                    ease: "linear" 
+                  }}
+                />
+                <motion.span
+                  animate={{ 
+                    opacity: [1, 0.5, 1],
+                  }}
+                  transition={{ 
+                    duration: 1.5, 
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                >
+                  {mode === "login" ? "Signing you in…" : "Creating account…"}
+                </motion.span>
+              </motion.span>
             ) : (
               mode === "login" ? "Sign In" : "Create Account"
             )}
@@ -319,7 +343,8 @@ export default function Home() {
 
         <button
           onClick={loginWithGoogle}
-          className="group w-full inline-flex items-center justify-center gap-3 rounded-xl border border-slate-600/30 bg-slate-700/30 hover:bg-slate-700/50 px-6 py-3 text-sm font-medium text-white transition-all duration-300 hover:border-indigo-500/50 shadow-lg hover:shadow-indigo-500/20"
+          disabled={loading}
+          className="group w-full inline-flex items-center justify-center gap-3 rounded-xl border border-slate-600/30 bg-slate-700/30 hover:bg-slate-700/50 px-6 py-3 text-sm font-medium text-white transition-all duration-300 hover:border-indigo-500/50 shadow-lg hover:shadow-indigo-500/20 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-slate-700/30"
           aria-label={
             mode === "login" ? "Continue with Google" : "Sign up with Google"
           }

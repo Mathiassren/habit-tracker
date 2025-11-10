@@ -160,10 +160,7 @@ export default function PrivacyPolicy() {
               <div className="bg-slate-700/30 rounded-lg p-4 mt-4 border border-slate-600/30">
                 <p className="text-white font-medium mb-2">Rytmo Support</p>
                 <p className="text-slate-300">
-                  Email: <a href="mailto:privacy@rytmo.app" className="text-indigo-400 hover:text-indigo-300 underline">privacy@rytmo.app</a>
-                </p>
-                <p className="text-slate-300 mt-2">
-                  (Please replace with your actual contact email)
+                  For questions about this Privacy Policy, please contact us through the app.
                 </p>
               </div>
             </div>

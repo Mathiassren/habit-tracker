@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import AnalyticsPage from "../analytics/page";
 import { supabase } from "@/services/supabase";
 import { X, Calendar, CheckCircle } from "lucide-react";
@@ -27,6 +27,17 @@ export default function HabitHeatmap({
   const [selectedDate, setSelectedDate] = useState(null);
   const [habitDetails, setHabitDetails] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  // Detect desktop for responsive sizing
+  useEffect(() => {
+    const checkDesktop = () => {
+      setIsDesktop(typeof window !== 'undefined' && window.innerWidth >= 1024);
+    };
+    checkDesktop();
+    window.addEventListener('resize', checkDesktop);
+    return () => window.removeEventListener('resize', checkDesktop);
+  }, []);
 
   // Fetch habit details for a specific date
   const fetchHabitDetails = async (date) => {
@@ -190,14 +201,14 @@ export default function HabitHeatmap({
 
   return (
     <section>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 mb-6">
-        <h3 className="text-xl sm:text-2xl font-bold text-white">{title}</h3>
-        <div className="text-xs sm:text-sm text-slate-400">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 mb-4 lg:mb-3">
+        <h3 className="text-lg sm:text-xl lg:text-xl font-bold text-white">{title}</h3>
+        <div className="text-xs text-slate-400 hidden sm:block">
           Click any square to view details
         </div>
       </div>
       <div 
-        className="overflow-x-auto -mx-2 px-2 heatmap-scroll" 
+        className="overflow-x-auto -mx-2 px-2 heatmap-scroll lg:overflow-x-visible" 
         style={{ cursor: 'pointer' }}
       >
         <ActivityCalendar
@@ -205,9 +216,9 @@ export default function HabitHeatmap({
           startDate={startISO}
           endDate={endISO}
           weekStart={weekStart}
-          blockSize={12}
-          blockMargin={4}
-          fontSize={11}
+          blockSize={isDesktop ? 10 : 12}
+          blockMargin={isDesktop ? 3 : 4}
+          fontSize={isDesktop ? 10 : 11}
           colorScheme="dark"
           hideTotalCount={false}
           labels={{

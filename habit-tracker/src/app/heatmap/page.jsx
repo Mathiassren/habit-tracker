@@ -47,31 +47,31 @@ export default function HeatmapPage() {
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,_rgba(99,102,241,0.15)_1px,_transparent_0)] bg-[size:24px_24px] opacity-40"></div>
       
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-12">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 lg:py-6">
         {/* Header Section */}
-        <div className="mb-8 sm:mb-12">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-5 mb-4 sm:mb-6">
+        <div className="mb-6 sm:mb-8 lg:mb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 lg:gap-3 mb-3 sm:mb-4 lg:mb-3">
             {/* Icon with enhanced glow effect */}
             <div className="relative flex-shrink-0">
               <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-indigo-500/70 via-blue-500/70 to-cyan-500/70 blur-2xl opacity-50"></div>
-              <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-indigo-500 via-blue-500 to-cyan-500 flex items-center justify-center shadow-2xl shadow-indigo-500/60 ring-2 ring-indigo-400/30 transition-transform hover:scale-105">
-                <TrendingUp className="w-6 h-6 sm:w-7 sm:h-7 text-white drop-shadow-lg" />
+              <div className="relative w-10 h-10 sm:w-12 sm:h-12 lg:w-10 lg:h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-blue-500 to-cyan-500 flex items-center justify-center shadow-2xl shadow-indigo-500/60 ring-2 ring-indigo-400/30 transition-transform hover:scale-105">
+                <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 lg:w-5 lg:h-5 text-white drop-shadow-lg" />
               </div>
             </div>
             <div className="flex-1 min-w-0">
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight mb-2">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-3xl font-bold leading-tight mb-1">
                 <span className="bg-gradient-to-r from-indigo-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent">
                   Activity Heatmap
                 </span>
               </h1>
-              <p className="text-slate-400 text-sm sm:text-base md:text-lg leading-relaxed">
+              <p className="text-slate-400 text-xs sm:text-sm md:text-base lg:text-sm leading-relaxed">
                 Visualize your habit completion patterns
               </p>
             </div>
           </div>
 
           {/* Quick Overview Stats - Summary only, no duplicates */}
-          <div className="grid grid-cols-3 gap-3 sm:gap-4 mt-6 sm:mt-8" data-tour="heatmap-stats">
+          <div className="grid grid-cols-3 gap-3 sm:gap-4 mt-4 sm:mt-6 lg:mt-4" data-tour="heatmap-stats">
             <div className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-800/40 backdrop-blur-xl rounded-xl border border-slate-700/50 p-3 sm:p-4 shadow-lg shadow-indigo-900/20">
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
@@ -115,7 +115,7 @@ export default function HeatmapPage() {
           {/* Left Column - Heatmap + Stats Below */}
           <div className="lg:col-span-2 space-y-4 sm:space-y-6">
             {/* Heatmap Section */}
-            <div className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-800/40 backdrop-blur-xl rounded-2xl border border-slate-700/50 shadow-2xl shadow-indigo-900/20 p-4 sm:p-6 lg:p-8" data-tour="heatmap-calendar">
+            <div className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-800/40 backdrop-blur-xl rounded-2xl border border-slate-700/50 shadow-2xl shadow-indigo-900/20 p-4 sm:p-6 lg:p-6" data-tour="heatmap-calendar">
               <HabitHeatmap className="p-0" byDate={byDate} userId={user?.id} />
             </div>
 
