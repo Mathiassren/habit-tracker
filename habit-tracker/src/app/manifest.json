@@ -1,6 +1,6 @@
 {
-  "name": "Habify - Habit Tracker",
-  "short_name": "Habify",
+  "name": "Rytmo - Habit Tracker",
+  "short_name": "Rytmo",
   "description": "Track your habits, build streaks, and visualize your progress",
   "start_url": "/",
   "display": "standalone",

@@ -51,33 +51,55 @@ export default function ResetPassword() {
         // Try to exchange code/token for session
         if (code || queryCode) {
           try {
+            // Use the full URL for code exchange (Supabase handles PKCE)
             const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(
               window.location.href
             );
             if (exchangeError) {
+              console.error("Code exchange error:", exchangeError);
               setError("Invalid or expired reset link. Please request a new password reset.");
               setMode("request");
               return;
             }
+            // Sync session with server
+            if (data?.session) {
+              await fetch("/auth/refresh", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ event: "SIGNED_IN", session: data.session }),
+              });
+            }
             // Clean up the URL after successful exchange
             window.history.replaceState({}, document.title, window.location.pathname);
           } catch (err) {
+            console.error("Code exchange exception:", err);
             setError("Invalid or expired reset link. Please request a new password reset.");
             setMode("request");
             return;
           }
         } else if (accessToken || queryToken) {
-          // If we have access_token, Supabase should process it automatically
-          // Listen for auth state changes to detect when session is established
+          // If we have access_token in hash, Supabase processes it automatically
+          // But we need to wait for the session to be established
           
           // Clean up any existing subscription
           if (subscriptionRef.current) {
             subscriptionRef.current.unsubscribe();
           }
           
+          let sessionEstablished = false;
+          
           const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
+            if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session && !sessionEstablished)) {
+              sessionEstablished = true;
               setMode("reset");
+              // Sync session with server
+              if (session) {
+                await fetch("/auth/refresh", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ event: "SIGNED_IN", session }),
+                });
+              }
               // Clean up the URL
               if (typeof window !== 'undefined') {
                 window.history.replaceState({}, document.title, window.location.pathname);
@@ -94,8 +116,15 @@ export default function ResetPassword() {
           // Also check session after a short delay
           setTimeout(async () => {
             const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
+            if (session && !sessionEstablished) {
+              sessionEstablished = true;
               setMode("reset");
+              // Sync session with server
+              await fetch("/auth/refresh", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ event: "SIGNED_IN", session }),
+              });
               if (typeof window !== 'undefined') {
                 window.history.replaceState({}, document.title, window.location.pathname);
               }
@@ -103,11 +132,11 @@ export default function ResetPassword() {
                 subscriptionRef.current.unsubscribe();
                 subscriptionRef.current = null;
               }
-            } else {
+            } else if (!session) {
               // If still no session after 3 seconds, show error
               setTimeout(async () => {
                 const { data: { session: finalSession } } = await supabase.auth.getSession();
-                if (!finalSession) {
+                if (!finalSession && !sessionEstablished) {
                   setError("Could not verify reset link. Please request a new password reset.");
                   setMode("request");
                   if (subscriptionRef.current) {
@@ -227,20 +256,34 @@ export default function ResetPassword() {
 
       if (error) {
         // If error is about session, provide helpful message
-        if (error.message.includes("session") || error.message.includes("token")) {
+        if (error.message.includes("session") || error.message.includes("token") || error.message.includes("expired")) {
           throw new Error("Invalid or expired reset link. Please request a new password reset.");
         }
         throw error;
       }
 
+      // Sync the session update with server
+      await fetch("/auth/refresh", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ event: "USER_UPDATED" }),
+      });
+
       setSuccess("Password updated successfully! Redirecting to login...");
       
-      // Sign out after password reset (security best practice)
+      // Sign out after password reset (security best practice - user should log in with new password)
       await supabase.auth.signOut();
+      
+      // Clear server-side session
+      await fetch("/auth/refresh", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ event: "SIGNED_OUT" }),
+      });
       
       // Redirect to login after a short delay
       setTimeout(() => {
-        router.push("/");
+        router.push("/?password=reset");
       }, 2000);
     } catch (err) {
       setError(err?.message || "Could not update password. Please try again.");

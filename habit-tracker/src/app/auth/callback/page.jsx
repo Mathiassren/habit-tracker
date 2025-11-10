@@ -15,7 +15,7 @@ export default function OAuthCallback() {
       let callbackUrl = window.location.href;
       if (typeof window !== 'undefined' && window.Capacitor) {
         // Replace custom scheme with https for Supabase
-        callbackUrl = callbackUrl.replace(/^com\.habify\.app:\/\//, 'https://habify1-5lwwsyfgu-mathiassrens-projects.vercel.app/');
+        callbackUrl = callbackUrl.replace(/^com\.rytmo\.app:\/\//, 'https://habify1-5lwwsyfgu-mathiassrens-projects.vercel.app/');
       }
 
       // Optional debug: confirm PKCE is present

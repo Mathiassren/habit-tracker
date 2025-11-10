@@ -59,7 +59,7 @@ export default function PrivacyPolicy() {
             <div className="text-slate-300 space-y-3 ml-9">
               <p>We use your information to:</p>
               <ul className="list-disc list-inside space-y-2 ml-4">
-                <li>Provide and maintain the Habify service</li>
+                <li>Provide and maintain the Rytmo service</li>
                 <li>Process your habit tracking and journal entries</li>
                 <li>Generate analytics and insights about your progress</li>
                 <li>Respond to your requests and provide customer support</li>
@@ -132,7 +132,7 @@ export default function PrivacyPolicy() {
             </h2>
             <div className="text-slate-300 space-y-3 ml-9">
               <p>
-                Habify is not intended for users under the age of 13. We do not knowingly collect personal information from children under 13. If you believe we have collected information from a child under 13, please contact us immediately.
+                Rytmo is not intended for users under the age of 13. We do not knowingly collect personal information from children under 13. If you believe we have collected information from a child under 13, please contact us immediately.
               </p>
             </div>
           </section>
@@ -158,9 +158,9 @@ export default function PrivacyPolicy() {
                 If you have any questions about this Privacy Policy or wish to exercise your rights, please contact us:
               </p>
               <div className="bg-slate-700/30 rounded-lg p-4 mt-4 border border-slate-600/30">
-                <p className="text-white font-medium mb-2">Habify Support</p>
+                <p className="text-white font-medium mb-2">Rytmo Support</p>
                 <p className="text-slate-300">
-                  Email: <a href="mailto:privacy@habify.app" className="text-indigo-400 hover:text-indigo-300 underline">privacy@habify.app</a>
+                  Email: <a href="mailto:privacy@rytmo.app" className="text-indigo-400 hover:text-indigo-300 underline">privacy@rytmo.app</a>
                 </p>
                 <p className="text-slate-300 mt-2">
                   (Please replace with your actual contact email)

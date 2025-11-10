@@ -28,7 +28,7 @@ export default function Logo({ size = "md", className = "" }) {
       {/* Logo Text */}
       <div className="flex flex-col">
         <h1 className={`font-bold bg-gradient-to-r from-indigo-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent ${currentSize.text}`}>
-          Habify
+          Rytmo
         </h1>
         {size === "lg" && (
           <p className="text-xs text-gray-400 font-medium -mt-1">Build Better Habits</p>

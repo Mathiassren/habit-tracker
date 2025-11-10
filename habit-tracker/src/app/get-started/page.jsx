@@ -60,7 +60,7 @@ export default function Home() {
     <div className="min-h-screen flex flex-col justify-start items-start bg-gray-900 text-white p-8">
       <main className="z-10 max-w-md w-full">
         <h1 className="text-4xl font-bold text-white">
-          Happily track your habits daily with Habify
+          Happily track your habits daily with Rytmo
         </h1>
         <p className="mt-4 text-2xl text-gray-300">
           Build consistency and improve your routine.

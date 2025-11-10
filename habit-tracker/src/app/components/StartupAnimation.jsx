@@ -13,11 +13,11 @@ export default function StartupAnimation() {
     if (typeof window === 'undefined') return;
     
     // Check if animation was already shown in this session
-    const hasShown = sessionStorage.getItem('habify-startup-shown');
+    const hasShown = sessionStorage.getItem('rytmo-startup-shown');
     
     if (!hasShown) {
       setIsVisible(true);
-      sessionStorage.setItem('habify-startup-shown', 'true');
+      sessionStorage.setItem('rytmo-startup-shown', 'true');
       
       // Show content after a brief delay
       const contentTimer = setTimeout(() => {

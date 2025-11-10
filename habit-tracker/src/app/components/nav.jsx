@@ -50,7 +50,7 @@ export default function Nav() {
           <Link 
             href={user ? "/dashboard" : "/"} 
             className="hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 rounded-lg"
-            aria-label="Habify - Go to dashboard"
+            aria-label="Rytmo - Go to dashboard"
           >
             <div className="md:hidden">
               <Logo size="sm" />
@@ -62,7 +62,7 @@ export default function Nav() {
 
           {/* Desktop Navigation */}
           {user && (
-            <div className="hidden md:flex items-center gap-2">
+            <div className="hidden md:flex items-center gap-2" data-tour="dashboard-nav" data-tour-target="dashboard-nav">
               {navItems.map((item) => {
                 const isActive = pathname === item.href || (item.href === "/dashboard" && pathname === "/");
                 const Icon = item.icon;
@@ -70,13 +70,15 @@ export default function Nav() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-900 ${
                       isActive
                         ? "bg-gradient-to-r from-indigo-600/20 to-blue-600/20 text-white border border-indigo-500/30"
                         : "text-slate-300 hover:text-white hover:bg-slate-800/50"
                     }`}
+                    aria-label={item.label}
+                    aria-current={isActive ? "page" : undefined}
                   >
-                    <Icon className={`w-4 h-4 ${isActive ? "text-indigo-400" : ""}`} />
+                    <Icon className={`w-4 h-4 ${isActive ? "text-indigo-400" : ""}`} aria-hidden="true" />
                     <span className="text-sm font-medium">{item.label}</span>
                   </Link>
                 );
@@ -96,9 +98,10 @@ export default function Nav() {
                 </div>
                 <button
                   onClick={logout}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all text-sm font-medium border border-transparent hover:border-red-500/30"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all text-sm font-medium border border-transparent hover:border-red-500/30 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-slate-900"
+                  aria-label="Logout"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogOut className="w-4 h-4" aria-hidden="true" />
                   <span className="hidden lg:inline">Logout</span>
                 </button>
               </div>
@@ -145,7 +148,7 @@ export default function Nav() {
                     key={item.href}
                     href={item.href}
                     onClick={closeMenu}
-                    className={`block py-3 px-4 rounded-xl transition-all duration-300 border group ${
+                    className={`block py-3 px-4 rounded-xl transition-all duration-300 border group focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-900 ${
                       isActive
                         ? "bg-gradient-to-r from-indigo-500/20 to-blue-500/20 text-white border-indigo-500/30"
                         : "text-gray-300 hover:text-white hover:bg-gradient-to-r hover:from-indigo-500/10 hover:to-blue-500/10 border-transparent hover:border-indigo-500/30"
@@ -153,14 +156,16 @@ export default function Nav() {
                     style={{
                       animation: `fadeInUp 0.4s ease-out ${0.05 + index * 0.05}s both`,
                     }}
+                    aria-label={item.label}
+                    aria-current={isActive ? "page" : undefined}
                   >
                     <div className="flex items-center gap-3">
                       <Icon className={`w-5 h-5 transition-colors ${
                         isActive ? "text-indigo-400" : "text-gray-400 group-hover:text-indigo-400"
-                      }`} />
+                      }`} aria-hidden="true" />
                       <span className="font-medium">{item.label}</span>
                       {isActive && (
-                        <div className="ml-auto w-2 h-2 rounded-full bg-indigo-400"></div>
+                        <div className="ml-auto w-2 h-2 rounded-full bg-indigo-400" aria-hidden="true"></div>
                       )}
                     </div>
                   </Link>
@@ -199,7 +204,8 @@ export default function Nav() {
                     closeMenu();
                     logout();
                   }}
-                  className="w-full py-3 px-4 bg-gradient-to-r from-red-600/20 to-rose-600/20 hover:from-red-600/30 hover:to-rose-600/30 text-red-300 hover:text-red-200 rounded-xl transition-all duration-300 border border-red-500/30 hover:border-red-500/50 font-medium"
+                  className="w-full py-3 px-4 bg-gradient-to-r from-red-600/20 to-rose-600/20 hover:from-red-600/30 hover:to-rose-600/30 text-red-300 hover:text-red-200 rounded-xl transition-all duration-300 border border-red-500/30 hover:border-red-500/50 font-medium focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-slate-900"
+                  aria-label="Logout"
                 >
                   Logout
                 </button>

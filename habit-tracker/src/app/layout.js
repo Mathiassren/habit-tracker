@@ -20,8 +20,8 @@ const play = Play({
 });
 
 export const metadata = {
-  title: "Habify",
-  description: "Track your habits with Habify",
+  title: "Rytmo",
+  description: "Track your habits with Rytmo",
 };
 export const viewport = { 
   themeColor: "#0a0a0a",

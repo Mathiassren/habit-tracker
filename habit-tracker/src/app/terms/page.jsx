@@ -34,7 +34,7 @@ export default function TermsOfService() {
             </h2>
             <div className="text-slate-300 space-y-3 ml-9">
               <p>
-                By accessing and using Habify ("the Service"), you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to these Terms of Service, please do not use the Service.
+                By accessing and using Rytmo ("the Service"), you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to these Terms of Service, please do not use the Service.
               </p>
             </div>
           </section>
@@ -45,7 +45,7 @@ export default function TermsOfService() {
             </h2>
             <div className="text-slate-300 space-y-3 ml-9">
               <p>
-                Habify is a habit tracking and journaling application that allows users to:
+                Rytmo is a habit tracking and journaling application that allows users to:
               </p>
               <ul className="list-disc list-inside space-y-2 ml-4">
                 <li>Create and track personal habits</li>
@@ -62,13 +62,13 @@ export default function TermsOfService() {
             </h2>
             <div className="text-slate-300 space-y-3 ml-9">
               <p>
-                <strong className="text-white">Account Creation:</strong> You must create an account to use Habify. You are responsible for maintaining the confidentiality of your account credentials.
+                <strong className="text-white">Account Creation:</strong> You must create an account to use Rytmo. You are responsible for maintaining the confidentiality of your account credentials.
               </p>
               <p>
                 <strong className="text-white">Account Security:</strong> You are responsible for all activities that occur under your account. Notify us immediately of any unauthorized use.
               </p>
               <p>
-                <strong className="text-white">Account Eligibility:</strong> You must be at least 13 years old to use Habify. By using the Service, you represent that you meet this age requirement.
+                <strong className="text-white">Account Eligibility:</strong> You must be at least 13 years old to use Rytmo. By using the Service, you represent that you meet this age requirement.
               </p>
             </div>
           </section>
@@ -98,10 +98,10 @@ export default function TermsOfService() {
             </h2>
             <div className="text-slate-300 space-y-3 ml-9">
               <p>
-                <strong className="text-white">Your Content:</strong> You retain ownership of all content you create or upload to Habify. By using the Service, you grant us a license to store, process, and display your content solely for the purpose of providing the Service.
+                <strong className="text-white">Your Content:</strong> You retain ownership of all content you create or upload to Rytmo. By using the Service, you grant us a license to store, process, and display your content solely for the purpose of providing the Service.
               </p>
               <p>
-                <strong className="text-white">Our Content:</strong> The Habify service, including its design, features, and functionality, is owned by us and protected by copyright, trademark, and other intellectual property laws.
+                <strong className="text-white">Our Content:</strong> The Rytmo service, including its design, features, and functionality, is owned by us and protected by copyright, trademark, and other intellectual property laws.
               </p>
             </div>
           </section>
@@ -123,7 +123,7 @@ export default function TermsOfService() {
             </h2>
             <div className="text-slate-300 space-y-3 ml-9">
               <p>
-                TO THE MAXIMUM EXTENT PERMITTED BY LAW, HABIFY IS PROVIDED "AS IS" WITHOUT WARRANTIES OF ANY KIND. WE DISCLAIM ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+                TO THE MAXIMUM EXTENT PERMITTED BY LAW, RYTMO IS PROVIDED "AS IS" WITHOUT WARRANTIES OF ANY KIND. WE DISCLAIM ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
               </p>
               <p>
                 We shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including loss of data, profits, or business opportunities, arising from your use of the Service.

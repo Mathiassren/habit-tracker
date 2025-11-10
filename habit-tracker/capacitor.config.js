@@ -1,6 +1,6 @@
 const config = {
-  appId: 'com.habify.app',
-  appName: 'Habify',
+  appId: 'com.rytmo.app',
+  appName: 'Rytmo',
   webDir: 'out', // For static export, or '.next' for development
   server: {
     // IMPORTANT: Replace 'https://your-app.vercel.app' with your actual Vercel URL

@@ -302,7 +302,7 @@ export default function LeaderboardPage() {
           </div>
 
           {/* Sort Options */}
-          <div className="flex flex-wrap gap-2 sm:gap-3 mb-4 sm:mb-6">
+          <div className="flex flex-wrap gap-2 sm:gap-3 mb-4 sm:mb-6" data-tour="leaderboard-sort">
             <button
               onClick={() => setSortBy("total_completions")}
               className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl border transition-all text-xs sm:text-sm ${
@@ -367,7 +367,7 @@ export default function LeaderboardPage() {
             <p className="text-slate-500 text-xs sm:text-sm mt-2">Be the first to complete a habit!</p>
           </div>
         ) : (
-          <div className="space-y-2 sm:space-y-3">
+          <div className="space-y-2 sm:space-y-3" data-tour="leaderboard-list">
             {leaderboard.map((entry, index) => {
               const isCurrentUser = user?.id === entry.user_id;
               return (

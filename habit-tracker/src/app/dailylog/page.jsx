@@ -49,7 +49,7 @@ const toLocalISO = (ts) =>
 function DateNavigator({ selectedDate, onChange, dotForDate }) {
   const go = (delta) => onChange(selectedDate.add(delta, "day"));
   return (
-    <div className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-800/40 backdrop-blur-xl rounded-xl border border-slate-700/50 p-4">
+    <div className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-800/40 backdrop-blur-xl rounded-xl border border-slate-700/50 p-4" data-tour="date-navigator">
       <div className="flex items-center gap-3">
         <button 
           onClick={() => go(-1)} 
@@ -700,6 +700,7 @@ export default function DailylogPage() {
         <button
           className="w-full border-dashed border-2 border-slate-600/50 hover:border-indigo-500/50 bg-slate-800/20 hover:bg-slate-800/40 p-6 text-center rounded-xl cursor-pointer text-slate-300 hover:text-white transition-all duration-300 mb-6 group"
           onClick={() => setShowAddModal(true)}
+          data-tour="add-habit"
         >
           <div className="flex items-center justify-center gap-2">
             <PlusIcon className="w-5 h-5 group-hover:scale-110 transition-transform" />
@@ -708,7 +709,7 @@ export default function DailylogPage() {
         </button>
 
         {/* Habit List with dnd-kit */}
-        <div className="space-y-3">
+        <div className="space-y-3" data-tour="habit-list">
           {habits.length === 0 ? (
             <div className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-800/40 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-12 text-center">
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-700/30 flex items-center justify-center">

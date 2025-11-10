@@ -71,7 +71,7 @@ export default function HeatmapPage() {
           </div>
 
           {/* Quick Overview Stats - Summary only, no duplicates */}
-          <div className="grid grid-cols-3 gap-3 sm:gap-4 mt-6 sm:mt-8">
+          <div className="grid grid-cols-3 gap-3 sm:gap-4 mt-6 sm:mt-8" data-tour="heatmap-stats">
             <div className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-800/40 backdrop-blur-xl rounded-xl border border-slate-700/50 p-3 sm:p-4 shadow-lg shadow-indigo-900/20">
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
@@ -115,7 +115,7 @@ export default function HeatmapPage() {
           {/* Left Column - Heatmap + Stats Below */}
           <div className="lg:col-span-2 space-y-4 sm:space-y-6">
             {/* Heatmap Section */}
-            <div className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-800/40 backdrop-blur-xl rounded-2xl border border-slate-700/50 shadow-2xl shadow-indigo-900/20 p-4 sm:p-6 lg:p-8">
+            <div className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-800/40 backdrop-blur-xl rounded-2xl border border-slate-700/50 shadow-2xl shadow-indigo-900/20 p-4 sm:p-6 lg:p-8" data-tour="heatmap-calendar">
               <HabitHeatmap className="p-0" byDate={byDate} userId={user?.id} />
             </div>
 

@@ -483,7 +483,7 @@ export default function JournalPage() {
                       {dayjs(selectedDate).format("dddd, MMMM D, YYYY")}
                     </p>
                   </div>
-                  <div className="w-full md:w-auto">
+                  <div className="w-full md:w-auto" data-tour="journal-date-picker">
                     <DatePickerInput
                       value={dayjs(selectedDate).toDate()}
                       onChange={(date) => date && setSelectedDate(dayjs(date).format("YYYY-MM-DD"))}
@@ -567,7 +567,7 @@ export default function JournalPage() {
 
               {/* Image Upload Section - Only show in edit mode */}
               {isEditMode && (
-                <div className="p-8 border-b border-white/10">
+                <div className="p-8 border-b border-white/10" data-tour="journal-image">
                   <div className="flex items-center gap-4 mb-4">
                     <ImageIcon className="w-5 h-5 text-indigo-400" />
                     <h3 className="text-lg font-semibold text-white">Add a Photo</h3>
@@ -770,6 +770,7 @@ export default function JournalPage() {
                         : "Keep writing... Your entry will auto-save as you type."
                     }
                     className="w-full h-80 px-6 py-4 bg-gray-800/50 border border-gray-700 rounded-2xl text-white placeholder-gray-400 focus:border-indigo-500 focus:outline-none resize-none backdrop-blur-sm text-lg leading-relaxed transition-colors"
+                    data-tour="journal-editor"
                     onKeyDown={(e) => {
                       // Allow Tab for indentation
                       if (e.key === "Tab") {
@@ -838,7 +839,7 @@ export default function JournalPage() {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Recent Entries */}
-            <div className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-800/40 backdrop-blur-xl rounded-2xl border border-slate-700/50 shadow-xl shadow-indigo-900/20 p-6">
+            <div className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-800/40 backdrop-blur-xl rounded-2xl border border-slate-700/50 shadow-xl shadow-indigo-900/20 p-6" data-tour="journal-sidebar">
               <h3 className="text-lg font-semibold text-white mb-6">Recent Entries</h3>
               
               {loadingEntries ? (

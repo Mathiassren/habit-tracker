@@ -61,17 +61,19 @@ export class ErrorBoundary extends Component {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <button
                 onClick={this.handleReset}
-                className="group flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 hover:from-indigo-500 hover:via-blue-500 hover:to-cyan-500 rounded-xl text-white font-medium shadow-lg shadow-indigo-500/30 hover:shadow-xl transition-all duration-300"
+                className="group flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 hover:from-indigo-500 hover:via-blue-500 hover:to-cyan-500 rounded-xl text-white font-medium shadow-lg shadow-indigo-500/30 hover:shadow-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-950"
+                aria-label="Reload page to try again"
               >
-                <RefreshCw className="w-5 h-5 group-hover:rotate-180 transition-transform" />
+                <RefreshCw className="w-5 h-5 group-hover:rotate-180 transition-transform" aria-hidden="true" />
                 <span>Try Again</span>
               </button>
 
               <Link
                 href="/dashboard"
-                className="group flex items-center gap-2 px-6 py-3 bg-gradient-to-br from-slate-800/40 to-slate-800/30 backdrop-blur-xl border border-slate-700/50 rounded-xl text-white hover:border-indigo-500/50 transition-all duration-300"
+                className="group flex items-center gap-2 px-6 py-3 bg-gradient-to-br from-slate-800/40 to-slate-800/30 backdrop-blur-xl border border-slate-700/50 rounded-xl text-white hover:border-indigo-500/50 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-950"
+                aria-label="Go to dashboard"
               >
-                <Home className="w-5 h-5" />
+                <Home className="w-5 h-5" aria-hidden="true" />
                 <span>Go to Dashboard</span>
               </Link>
             </div>

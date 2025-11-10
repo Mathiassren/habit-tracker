@@ -1,8 +1,8 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.habify.app',
-  appName: 'Habify',
+  appId: 'com.rytmo.app',
+  appName: 'Rytmo',
   webDir: '.next',
   server: {
     // Replace with your Vercel deployment URL
@@ -20,6 +20,7 @@ const config: CapacitorConfig = {
 };
 
 export default config;
+
 
 
 

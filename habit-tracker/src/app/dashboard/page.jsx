@@ -124,7 +124,17 @@ export default function Dashboard() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {navigationCards.map((card) => (
-              <NavCard key={card.href} {...card} />
+              <NavCard 
+                key={card.href} 
+                {...card} 
+                dataTourId={
+                  card.href === "/dailylog" ? "daily-log-card" :
+                  card.href === "/journal" ? "journal-card" :
+                  card.href === "/heatmap" ? "analytics-card" :
+                  card.href === "/leaderboard" ? "leaderboard-card" :
+                  null
+                }
+              />
             ))}
           </div>
         </div>
@@ -133,13 +143,20 @@ export default function Dashboard() {
   );
 }
 
-function NavCard({ href, icon: Icon, label, gradient, description }) {
+function NavCard({ href, icon: Icon, label, gradient, description, dataTourId }) {
   return (
-    <Link href={href} className="group block">
-      <div className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-800/40 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-6 shadow-xl transition-all duration-300 group-hover:scale-[1.02] group-hover:border-indigo-500/50 group-hover:shadow-2xl group-hover:shadow-indigo-900/30 h-full">
+    <Link 
+      href={href} 
+      className="group block focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-950 rounded-2xl"
+      aria-label={`${label}: ${description}`}
+    >
+      <div 
+        className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-800/40 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-6 shadow-xl transition-all duration-300 group-hover:scale-[1.02] group-hover:border-indigo-500/50 group-hover:shadow-2xl group-hover:shadow-indigo-900/30 h-full"
+        {...(dataTourId ? { 'data-tour': dataTourId } : {})}
+      >
         <div className="flex flex-col items-center text-center space-y-4">
           <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300`}>
-            <Icon className="w-8 h-8 text-white" />
+            <Icon className="w-8 h-8 text-white" aria-hidden="true" />
           </div>
           <div>
             <h3 className="text-white font-bold text-lg mb-1 group-hover:text-indigo-300 transition-colors">

@@ -43,7 +43,7 @@ export function useAuth() {
     let redirectTo;
     if (isCapacitor) {
       // Use the app's custom URL scheme for deep linking back to the app
-      redirectTo = `com.habify.app://auth/callback`;
+      redirectTo = `com.rytmo.app://auth/callback`;
     } else {
       redirectTo = `${window.location.origin}/auth/callback`;
     }
@@ -71,7 +71,7 @@ export function useAuth() {
           url: data.url,
           presentationStyle: 'popover', // Opens as modal overlay, better UX
         });
-        // Note: When OAuth completes, it will redirect to com.habify.app://auth/callback
+        // Note: When OAuth completes, it will redirect to com.rytmo.app://auth/callback
         // The App plugin will handle this deep link and navigate to /auth/callback
         // The callback page will then process the authentication
       } catch (err) {

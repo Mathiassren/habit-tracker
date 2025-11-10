@@ -120,12 +120,12 @@ const AppTab = () => {
             <SparklesIcon className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-white">About Habify</h2>
+            <h2 className="text-2xl font-bold text-white">About Rytmo</h2>
             <p className="text-slate-400 text-sm">Version 1.0.0</p>
           </div>
         </div>
         <p className="text-slate-300 leading-relaxed">
-          Habify is your personal habit tracking companion designed to help you build consistency and achieve your goals. 
+          Rytmo is your personal habit tracking companion designed to help you build consistency and achieve your goals. 
           Track daily habits, maintain streaks, journal your thoughts, and visualize your progress with beautiful analytics.
         </p>
       </div>

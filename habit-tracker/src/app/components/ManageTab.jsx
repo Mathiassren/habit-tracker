@@ -318,7 +318,7 @@ const ManageTab = ({ user, setUser }) => {
           <div className="mb-4">
             <h3 className="text-lg font-semibold text-white mb-1">Profile Avatar</h3>
             <p className="text-sm text-slate-400">
-              Change the way you appear on Habify
+              Change the way you appear on Rytmo
             </p>
           </div>
 
@@ -377,7 +377,7 @@ const ManageTab = ({ user, setUser }) => {
           <div className="mb-4">
             <h3 className="text-lg font-semibold text-white mb-1">Display Name</h3>
             <p className="text-sm text-slate-400">
-              Change how your name appears on Habify
+              Change how your name appears on Rytmo
             </p>
           </div>
           <button
