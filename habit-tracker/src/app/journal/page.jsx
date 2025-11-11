@@ -26,6 +26,7 @@ export default function JournalPage() {
   const [showReadOnlyModal, setShowReadOnlyModal] = useState(false);
   const [selectedReadOnlyEntry, setSelectedReadOnlyEntry] = useState(null);
   const fileInputRef = useRef(null);
+  const textareaRef = useRef(null);
   
   // Auto-save state
   const [saveStatus, setSaveStatus] = useState("idle"); // "idle" | "saving" | "saved" | "error"
@@ -515,6 +516,15 @@ export default function JournalPage() {
     loadEntryForDate();
   }, [selectedDate, entries]);
 
+  // Auto-focus textarea when entering edit mode
+  useEffect(() => {
+    if (isEditMode && textareaRef.current) {
+      setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 100);
+    }
+  }, [isEditMode]);
+
   // Create a map of dates with entries for calendar dots
   const entriesByDate = entries.reduce((acc, entry) => {
     acc[entry.date] = entry;
@@ -554,37 +564,100 @@ export default function JournalPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950/20 to-slate-950 text-white">
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-12 text-center">
-          <div className="mb-6">
-                    <h1 className="text-4xl font-bold text-gradient-vibrant mb-2">Journal</h1>
-                    <p className="text-slate-400 text-lg">
-                      Capture your thoughts, memories, and experiences
-                    </p>
+        <div className="mb-8">
+          <div className="flex items-center gap-4 mb-2">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 via-blue-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+              <BookOpen className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-bold text-white mb-1">Your Thoughts</h1>
+              <p className="text-slate-400 text-sm sm:text-base">
+                Capture your thoughts, memories, and experiences
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 lg:gap-8">
           {/* Main Writing Area */}
           <div className="xl:col-span-3">
-            <div data-main-editor className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-800/40 backdrop-blur-xl rounded-3xl border border-slate-700/50 shadow-2xl shadow-indigo-900/20 overflow-hidden">
-              {/* Date Selector */}
-              <div className="p-8 border-b border-white/10 bg-gradient-to-r from-indigo-600/10 via-blue-600/10 to-cyan-600/10">
-                <div className="flex items-center gap-4 flex-wrap">
-                  <Calendar className="w-6 h-6 text-indigo-400" />
-                  <div className="flex-1 min-w-0">
-                    <h2 className="text-xl font-semibold text-white">Today's Entry</h2>
-                    <p className="text-gray-400 text-sm">
-                      {dayjs(selectedDate).format("dddd, MMMM D, YYYY")}
-                    </p>
-                  </div>
-                  <div className="w-full md:w-auto" data-tour="journal-date-picker">
+            <div data-main-editor className="bg-slate-900/50 backdrop-blur-xl rounded-2xl border border-slate-800/50 shadow-xl overflow-hidden">
+              {/* Header Bar */}
+              <div className="px-6 py-4 border-b border-slate-800/50 flex items-center justify-end">
+                <div className="flex items-center gap-2">
+                  {!isEditMode && isEditing && (
+                    <button
+                      onClick={() => setIsEditMode(true)}
+                      className="px-4 py-2 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400 hover:text-indigo-300 transition-all flex items-center gap-2 text-sm font-medium"
+                      title="Edit Entry"
+                    >
+                      <Edit3 size={16} />
+                      <span>Edit</span>
+                    </button>
+                  )}
+                  {isEditMode && (
+                    <>
+                      {isEditing && (
+                        <button
+                          onClick={deleteEntry}
+                          className="w-10 h-10 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 hover:text-red-300 transition-all flex items-center justify-center"
+                          title="Delete Entry"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => {
+                          if (hasUnsavedChanges) {
+                            saveEntry();
+                          } else {
+                            setIsEditMode(false);
+                          }
+                        }}
+                        disabled={(!currentEntry.trim() && !currentImageUrl) || saveStatus === "saving"}
+                        className="px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-400 hover:to-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2 shadow-lg shadow-indigo-500/20 text-sm font-medium"
+                        title={hasUnsavedChanges ? "Save Entry (Ctrl+S)" : (isEditing && (currentEntry.trim() || currentImageUrl) ? "Done" : "Save Entry")}
+                      >
+                        {saveStatus === "saving" ? (
+                          <>
+                            <Loader2 size={16} className="animate-spin" />
+                            <span>Saving...</span>
+                          </>
+                        ) : hasUnsavedChanges ? (
+                          <>
+                            <Save size={16} />
+                            <span>Save</span>
+                          </>
+                        ) : (isEditing && (currentEntry.trim() || currentImageUrl)) ? (
+                          <>
+                            <CheckCircle2 size={16} />
+                            <span>Done</span>
+                          </>
+                        ) : (
+                          <>
+                            <Save size={16} />
+                            <span>Save</span>
+                          </>
+                        )}
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Date Picker - Compact */}
+              <div className="px-6 py-3 border-b border-slate-800/50 bg-slate-900/30" data-tour="journal-date-picker">
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-4 h-4 text-indigo-400" />
+                  <div className="flex-1 cursor-pointer" data-tour="journal-date-picker">
                     <DatePickerInput
                       value={dayjs(selectedDate).toDate()}
                       onChange={(date) => date && setSelectedDate(dayjs(date).format("YYYY-MM-DD"))}
                       valueFormat="MMMM D, YYYY"
                       maxDate={dayjs().toDate()}
+                      placeholder="Select a date"
                       renderDay={(date) => {
                         const dateStr = dayjs(date).format("YYYY-MM-DD");
                         const dotColor = getDotColor(dateStr);
@@ -598,15 +671,15 @@ export default function JournalPage() {
                             </span>
                             {dotColor && (
                               <div
-                                className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full shadow-lg"
+                                className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full"
                                 style={{
                                   backgroundColor: dotColor,
-                                  boxShadow: `0 0 6px ${dotColor}40, 0 0 12px ${dotColor}20`
+                                  boxShadow: `0 0 4px ${dotColor}60`
                                 }}
                               />
                             )}
                             {isSelected && (
-                              <div className="absolute inset-0 rounded-md bg-indigo-500/20 border-2 border-indigo-400"></div>
+                              <div className="absolute inset-0 rounded-md bg-indigo-500/20 border border-indigo-400/50"></div>
                             )}
                           </div>
                         );
@@ -615,47 +688,51 @@ export default function JournalPage() {
                         withinPortal: true,
                         styles: { 
                           dropdown: { 
-                            backgroundColor: "rgb(15 15 15 / 0.95)",
+                            backgroundColor: "rgb(15 23 42 / 0.98)",
                             backdropFilter: "blur(20px)",
-                            border: "1px solid rgb(99 102 241 / 0.3)",
-                            borderRadius: "16px",
-                            boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.2)"
+                            border: "1px solid rgb(51 65 85 / 0.5)",
+                            borderRadius: "12px",
+                            boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.5)"
                           } 
                         },
                       }}
                       styles={{
                         input: {
-                          backgroundColor: "rgb(30 30 30 / 0.8)",
+                          backgroundColor: "transparent",
                           color: "#ffffff",
-                          border: "1px solid rgb(99 102 241 / 0.3)",
-                          borderRadius: "12px",
-                          fontSize: "16px",
-                          padding: "12px 16px",
-                          backdropFilter: "blur(10px)",
+                          border: "none",
+                          fontSize: "14px",
+                          padding: "0",
+                          fontWeight: "500",
+                          cursor: "pointer",
+                          "&:hover": {
+                            color: "rgb(129 140 248)"
+                          },
                           "&:focus": {
-                            borderColor: "rgb(99 102 241 / 0.6)",
-                            boxShadow: "0 0 0 3px rgb(99 102 241 / 0.1)"
+                            border: "none",
+                            boxShadow: "none",
+                            color: "rgb(129 140 248)"
                           }
                         },
                         day: { 
                           color: "#fff",
-                          borderRadius: "8px",
+                          borderRadius: "6px",
                           "&:hover": {
                             backgroundColor: "rgb(99 102 241 / 0.2)"
                           },
                           "&[data-selected]": {
-                            backgroundColor: "rgb(99 102 241 / 0.4)",
+                            backgroundColor: "rgb(99 102 241 / 0.3)",
                             color: "#fff"
                           }
                         },
                         weekday: {
-                          color: "rgb(99 102 241 / 0.8)"
+                          color: "rgb(148 163 184)"
                         },
                         calendarHeader: {
                           color: "#fff"
                         }
                       }}
-                      className="w-full md:w-auto"
+                      className="w-full"
                     />
                   </div>
                 </div>
@@ -663,194 +740,133 @@ export default function JournalPage() {
 
               {/* Image Upload Section - Only show in edit mode */}
               {isEditMode && (
-                <div className="p-8 border-b border-white/10" data-tour="journal-image">
-                  <div className="flex items-center gap-4 mb-4">
-                    <ImageIcon className="w-5 h-5 text-indigo-400" />
-                    <h3 className="text-lg font-semibold text-white">Add a Photo</h3>
-                  </div>
-                
-                {currentImageUrl ? (
-                  <div className="relative group">
-                    <div className="relative w-full min-h-48 max-h-96 rounded-2xl overflow-hidden bg-gray-800 flex items-center justify-center">
-                      <NextImage
-                        src={currentImageUrl}
-                        alt="Journal image"
-                        width={800}
-                        height={600}
-                        className="w-full h-auto max-h-96 object-contain rounded-2xl"
-                        unoptimized
-                      />
-                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-                      <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-                        <button
-                          onClick={() => setShowImagePreview(true)}
-                          className="p-2 bg-white/20 backdrop-blur-sm rounded-lg text-white hover:bg-white/30 transition-colors"
-                        >
-                          <Eye size={16} />
-                        </button>
-                        <button
-                          onClick={removeImage}
-                          className="p-2 bg-red-500/20 backdrop-blur-sm rounded-lg text-red-300 hover:bg-red-500/30 transition-colors"
-                        >
-                          <X size={16} />
-                        </button>
+                <div className="px-6 py-4 border-b border-slate-800/50" data-tour="journal-image">
+                  {currentImageUrl ? (
+                    <div className="relative group">
+                      <div className="relative w-full min-h-32 max-h-64 rounded-xl overflow-hidden bg-slate-800/50 flex items-center justify-center">
+                        <NextImage
+                          src={currentImageUrl}
+                          alt="Journal image"
+                          width={800}
+                          height={600}
+                          className="w-full h-auto max-h-64 object-contain rounded-xl"
+                          unoptimized
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all pointer-events-none" />
+                        <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                          <button
+                            onClick={() => setShowImagePreview(true)}
+                            className="p-2 bg-black/50 backdrop-blur-sm rounded-lg text-white hover:bg-black/70 transition-colors"
+                          >
+                            <Eye size={14} />
+                          </button>
+                          <button
+                            onClick={removeImage}
+                            className="p-2 bg-red-500/80 backdrop-blur-sm rounded-lg text-white hover:bg-red-500 transition-colors"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ) : (
-                  <div
-                    onClick={() => fileInputRef.current?.click()}
-                    className="w-full h-48 border-2 border-dashed border-gray-600 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-indigo-500 hover:bg-indigo-500/5 transition-colors group"
-                  >
-                    {uploading ? (
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
-                    ) : (
-                      <>
-                        <Upload className="w-12 h-12 text-gray-400 group-hover:text-indigo-400 transition-colors mb-4" />
-                        <p className="text-gray-400 group-hover:text-indigo-300 transition-colors">
-                          Click to upload an image
-                        </p>
-                        <p className="text-gray-500 text-sm mt-1">
-                          Images are automatically optimized
-                        </p>
-                      </>
-                    )}
-                  </div>
-                )}
+                  ) : (
+                    <div
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-full h-32 border border-dashed border-slate-700 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-indigo-500/50 hover:bg-indigo-500/5 transition-all group"
+                    >
+                      {uploading ? (
+                        <Loader2 className="w-6 h-6 text-indigo-400 animate-spin" />
+                      ) : (
+                        <>
+                          <ImageIcon className="w-6 h-6 text-slate-500 group-hover:text-indigo-400 transition-colors mb-2" />
+                          <p className="text-xs text-slate-400 group-hover:text-indigo-300 transition-colors">
+                            Add photo
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  )}
 
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      setCurrentImage(file);
-                      handleImageUpload(file);
-                    }
-                  }}
-                  className="hidden"
-                />
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setCurrentImage(file);
+                        handleImageUpload(file);
+                      }
+                    }}
+                    className="hidden"
+                  />
                 </div>
               )}
 
               {/* Image Display - Read-only mode */}
               {!isEditMode && currentImageUrl && (
-                <div className="p-8 border-b border-white/10">
-                  <div className="flex items-center gap-4 mb-4">
-                    <ImageIcon className="w-5 h-5 text-indigo-400" />
-                    <h3 className="text-lg font-semibold text-white">Photo</h3>
-                  </div>
-                  <div className="relative group">
-                    <div className="relative w-full min-h-48 max-h-96 rounded-2xl overflow-hidden bg-gray-800 flex items-center justify-center">
-                      <NextImage
-                        src={currentImageUrl}
-                        alt="Journal image"
-                        width={800}
-                        height={600}
-                        className="w-full h-auto max-h-96 object-contain rounded-2xl"
-                        unoptimized
-                      />
-                    </div>
+                <div className="px-6 py-4 border-b border-slate-800/50">
+                  <div className="relative w-full min-h-32 max-h-64 rounded-xl overflow-hidden bg-slate-800/50 flex items-center justify-center">
+                    <NextImage
+                      src={currentImageUrl}
+                      alt="Journal image"
+                      width={800}
+                      height={600}
+                      className="w-full h-auto max-h-64 object-contain rounded-xl"
+                      unoptimized
+                    />
                   </div>
                 </div>
               )}
 
               {/* Writing Area */}
-              <div className="p-8">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center">
-                      <Edit3 className="w-4 h-4 text-indigo-400" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-white">Your Thoughts</h3>
-                      {/* Save Status Indicator */}
-                      <div className="flex items-center gap-2 mt-1">
-                        {saveStatus === "saving" && (
-                          <div className="flex items-center gap-1.5 text-xs text-indigo-400">
-                            <Loader2 size={12} className="animate-spin" />
-                            <span>Saving...</span>
-                          </div>
-                        )}
-                        {saveStatus === "saved" && (
-                          <div className="flex items-center gap-1.5 text-xs text-emerald-400">
-                            <CheckCircle2 size={12} />
-                            <span>Saved</span>
-                          </div>
-                        )}
-                        {saveStatus === "error" && (
-                          <div className="flex items-center gap-1.5 text-xs text-red-400">
-                            <AlertCircle size={12} />
-                            <span>Save failed</span>
-                          </div>
-                        )}
-                        {hasUnsavedChanges && saveStatus === "idle" && (
-                          <div className="flex items-center gap-1.5 text-xs text-amber-400">
-                            <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></div>
-                            <span>Unsaved changes</span>
-                          </div>
-                        )}
-                        {lastSavedAt && !hasUnsavedChanges && saveStatus === "idle" && (
-                          <span className="text-xs text-slate-500">
-                            Saved {dayjs(lastSavedAt).fromNow()}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+              <div className="px-6 py-6">
+                {/* Save Status Indicator */}
+                <div className="mb-4 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    {!isEditMode && isEditing && (
-                      <button
-                        onClick={() => setIsEditMode(true)}
-                        className="px-4 py-2 bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 hover:from-indigo-500 hover:via-blue-500 hover:to-cyan-500 text-white rounded-xl transition-all shadow-lg shadow-indigo-500/30 flex items-center gap-2 text-sm font-medium"
-                        title="Edit Entry"
-                      >
-                        <Edit3 size={16} />
-                        <span>Edit</span>
-                      </button>
+                    {saveStatus === "saving" && (
+                      <div className="flex items-center gap-1.5 text-xs text-indigo-400">
+                        <Loader2 size={12} className="animate-spin" />
+                        <span>Saving...</span>
+                      </div>
                     )}
-                    {isEditMode && (
-                      <>
-                        {isEditing && (
-                          <button
-                            onClick={deleteEntry}
-                            className="p-3 bg-red-500/20 text-red-400 rounded-xl hover:bg-red-500/30 transition-colors backdrop-blur-sm group"
-                            title="Delete Entry"
-                          >
-                            <Trash2 size={18} className="group-hover:scale-110 transition-transform" />
-                          </button>
-                        )}
-                        <button
-                          onClick={() => {
-                            if (hasUnsavedChanges) {
-                              saveEntry();
-                            } else {
-                              setIsEditMode(false);
-                            }
-                          }}
-                          disabled={(!currentEntry.trim() && !currentImageUrl) || saveStatus === "saving"}
-                          className="p-3 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-xl hover:from-indigo-500 hover:to-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-500/30 group"
-                          title={hasUnsavedChanges ? (isEditing ? "Update Entry (Ctrl+S)" : "Save Entry (Ctrl+S)") : "Done"}
-                        >
-                          {saveStatus === "saving" ? (
-                            <Loader2 size={18} className="animate-spin" />
-                          ) : hasUnsavedChanges ? (
-                            <Save size={18} className="group-hover:scale-110 transition-transform" />
-                          ) : (
-                            <CheckCircle2 size={18} className="group-hover:scale-110 transition-transform" />
-                          )}
-                        </button>
-                      </>
+                    {saveStatus === "saved" && (
+                      <div className="flex items-center gap-1.5 text-xs text-emerald-400">
+                        <CheckCircle2 size={12} />
+                        <span>Saved</span>
+                      </div>
+                    )}
+                    {saveStatus === "error" && (
+                      <div className="flex items-center gap-1.5 text-xs text-red-400">
+                        <AlertCircle size={12} />
+                        <span>Save failed</span>
+                      </div>
+                    )}
+                    {hasUnsavedChanges && saveStatus === "idle" && (
+                      <div className="flex items-center gap-1.5 text-xs text-amber-400">
+                        <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></div>
+                        <span>Unsaved changes</span>
+                      </div>
+                    )}
+                    {lastSavedAt && !hasUnsavedChanges && saveStatus === "idle" && (
+                      <span className="text-xs text-slate-500">
+                        Saved {dayjs(lastSavedAt).fromNow()}
+                      </span>
                     )}
                   </div>
                 </div>
 
                 {/* Read-only view */}
                 {!isEditMode && currentEntry.trim() && (
-                  <div className="w-full min-h-80 px-6 py-4 bg-gray-800/30 border border-gray-700/50 rounded-2xl backdrop-blur-sm">
-                    <div className="text-white text-lg leading-relaxed whitespace-pre-wrap">
-                      {currentEntry || <span className="text-gray-400 italic">No content</span>}
+                  <div 
+                    className="w-full min-h-[400px] px-6 py-6 bg-slate-800/30 border border-slate-800/50 rounded-xl cursor-text hover:border-slate-700/70 transition-colors group"
+                    onClick={() => setIsEditMode(true)}
+                  >
+                    <div className="text-white text-base leading-relaxed whitespace-pre-wrap font-light">
+                      {currentEntry || <span className="text-slate-400 italic">No content</span>}
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-slate-800/50 flex items-center justify-between">
+                      <span className="text-xs text-slate-500">Click anywhere to edit</span>
                     </div>
                   </div>
                 )}
@@ -858,14 +874,15 @@ export default function JournalPage() {
                 {/* Edit mode textarea */}
                 {isEditMode && (
                   <textarea
+                    ref={textareaRef}
                     value={currentEntry}
                     onChange={(e) => setCurrentEntry(e.target.value)}
                     placeholder={
                       currentEntry.trim() === "" 
-                        ? "What's on your mind today? Share your thoughts, experiences, or anything you'd like to remember...\n\n💡 Tip: Your entry will auto-save as you type. Press Ctrl+S to save manually."
-                        : "Keep writing... Your entry will auto-save as you type."
+                        ? "What's on your mind today?\n\nShare your thoughts, experiences, or anything you'd like to remember..."
+                        : "Keep writing..."
                     }
-                    className="w-full h-80 px-6 py-4 bg-gray-800/50 border border-gray-700 rounded-2xl text-white placeholder-gray-400 focus:border-indigo-500 focus:outline-none resize-none backdrop-blur-sm text-lg leading-relaxed transition-colors"
+                    className="w-full min-h-[400px] px-6 py-6 bg-slate-800/30 border border-indigo-500/30 rounded-xl text-white placeholder-slate-500 focus:border-indigo-500/70 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 resize-none text-base leading-relaxed transition-all font-light"
                     data-tour="journal-editor"
                     onKeyDown={(e) => {
                       // Allow Tab for indentation
@@ -889,64 +906,60 @@ export default function JournalPage() {
 
                 {/* Empty state when no entry and not in edit mode */}
                 {!isEditMode && !currentEntry.trim() && (
-                  <div className="w-full min-h-80 px-6 py-4 bg-gray-800/30 border border-gray-700/50 rounded-2xl backdrop-blur-sm flex items-center justify-center">
-                    <div className="text-center">
-                      <BookOpen className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                      <p className="text-gray-400 mb-2">No entry for this date</p>
+                  <div className="w-full min-h-[400px] px-6 py-6 bg-slate-800/30 border-2 border-dashed border-slate-700/50 rounded-xl flex items-center justify-center hover:border-indigo-500/50 transition-colors">
+                    <div className="text-center max-w-sm">
+                      <div className="w-16 h-16 rounded-full bg-indigo-500/20 flex items-center justify-center mx-auto mb-4">
+                        <Edit3 className="w-8 h-8 text-indigo-400" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-white mb-2">Start your journal entry</h3>
+                      <p className="text-slate-400 mb-6 text-sm">Capture your thoughts and memories for this day</p>
                       <button
                         onClick={() => setIsEditMode(true)}
-                        className="text-indigo-400 hover:text-indigo-300 transition-colors text-sm font-medium"
+                        className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-400 hover:to-blue-400 text-white rounded-lg transition-all shadow-lg shadow-indigo-500/30 font-medium flex items-center gap-2 mx-auto"
                       >
-                        Start writing →
+                        <Edit3 size={18} />
+                        <span>Start writing</span>
                       </button>
                     </div>
                   </div>
                 )}
 
-                {/* Stats footer - only show in edit mode or when there's content */}
-                {(isEditMode || currentEntry.trim()) && (
-                  <div className="mt-4 flex items-center justify-between text-sm text-gray-400">
-                    <div className="flex items-center gap-4">
-                      <span>{getWordCount(currentEntry)} words</span>
-                      <span className="text-gray-600">•</span>
-                      <span>{currentEntry.length} characters</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {isEditMode && (
-                        <>
-                          <span className="text-xs text-gray-500">Press</span>
-                          <kbd className="px-2 py-1 bg-gray-700/50 border border-gray-600 rounded text-xs font-mono text-gray-300">
-                            Ctrl+S
-                          </kbd>
-                          <span className="text-xs text-gray-500">to save</span>
-                          <span className="text-gray-600 mx-2">•</span>
-                        </>
-                      )}
-                      <span className="text-indigo-400">
-                        {dayjs(selectedDate).format("MMMM D, YYYY")}
-                      </span>
-                    </div>
+                {/* Stats footer */}
+                <div className="mt-4 pt-4 border-t border-slate-800/50 flex items-center justify-between text-xs text-slate-500">
+                  <div className="flex items-center gap-3">
+                    <span>{getWordCount(currentEntry)} words</span>
+                    <span className="text-slate-700">•</span>
+                    <span>{currentEntry.length} characters</span>
                   </div>
-                )}
+                  {isEditMode && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-600">Press</span>
+                      <kbd className="px-2 py-0.5 bg-slate-800/50 border border-slate-700/50 rounded text-xs font-mono text-slate-300">
+                        Ctrl+S
+                      </kbd>
+                      <span className="text-slate-600">to save</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Recent Entries */}
-            <div className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-800/40 backdrop-blur-xl rounded-2xl border border-slate-700/50 shadow-xl shadow-indigo-900/20 p-6" data-tour="journal-sidebar">
-              <h3 className="text-lg font-semibold text-white mb-6">Recent Entries</h3>
+            <div className="bg-slate-900/50 backdrop-blur-xl rounded-xl border border-slate-800/50 shadow-xl p-5" data-tour="journal-sidebar">
+              <h3 className="text-base font-semibold text-white mb-4">Recent Entries</h3>
               
               {loadingEntries ? (
                 <div className="flex items-center justify-center py-8">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-500"></div>
+                  <Loader2 className="w-5 h-5 text-indigo-400 animate-spin" />
                 </div>
               ) : entries.length === 0 ? (
                 <div className="text-center py-8">
-                  <BookOpen className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-400 font-medium mb-1">No entries yet</p>
-                  <p className="text-gray-500 text-sm mb-4">Start writing your first entry!</p>
+                  <BookOpen className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+                  <p className="text-slate-400 text-sm mb-1">No entries yet</p>
+                  <p className="text-slate-500 text-xs mb-4">Start writing your first entry!</p>
                   <button
                     onClick={() => {
                       setSelectedDate(dayjs().format("YYYY-MM-DD"));
@@ -963,74 +976,70 @@ export default function JournalPage() {
                   </button>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {entries.slice(0, 5).map((entry) => (
                     <div
                       key={entry.id}
                       onClick={() => openReadOnlyModal(entry)}
-                      className={`p-4 rounded-xl border transition-all group cursor-pointer ${
+                      className={`p-3 rounded-lg border transition-all group cursor-pointer ${
                         entry.date === selectedDate
-                          ? "bg-indigo-500/20 border-indigo-500/50 shadow-lg shadow-indigo-500/20"
-                          : "bg-slate-700/20 border-slate-600/30 hover:bg-slate-700/30 hover:border-slate-500/50"
+                          ? "bg-indigo-500/20 border-indigo-500/50"
+                          : "bg-slate-800/30 border-slate-700/50 hover:bg-slate-800/50 hover:border-slate-700/70"
                       }`}
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-white">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-xs font-medium text-white">
                           {dayjs(entry.date).format("MMM D")}
                         </span>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5">
                           {entry.image_url && (
-                            <ImageIcon className="w-4 h-4 text-indigo-400" />
+                            <ImageIcon className="w-3.5 h-3.5 text-indigo-400" />
                           )}
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               openReadOnlyModal(entry);
                             }}
-                            className="opacity-60 md:opacity-0 md:group-hover:opacity-100 transition-opacity p-1 hover:bg-white/10 rounded-lg active:opacity-100"
+                            className="p-1 hover:bg-white/10 rounded transition-colors"
                             title="View Entry"
                           >
-                            <Eye className="w-4 h-4 text-slate-400 hover:text-white" />
+                            <Eye className="w-3.5 h-3.5 text-slate-400 hover:text-white" />
                           </button>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               deleteEntryById(entry.id, entry.date);
                             }}
-                            className="opacity-60 md:opacity-0 md:group-hover:opacity-100 transition-opacity p-1 hover:bg-red-500/20 rounded-lg active:opacity-100"
+                            className="p-1 hover:bg-red-500/20 rounded transition-colors"
                             title="Delete Entry"
                           >
-                            <Trash2 className="w-4 h-4 text-red-400 hover:text-red-300" />
+                            <Trash2 className="w-3.5 h-3.5 text-red-400 hover:text-red-300" />
                           </button>
                         </div>
                       </div>
-                      <p className="text-sm text-gray-300 line-clamp-2 mb-2">
+                      <p className="text-xs text-slate-300 line-clamp-2 mb-1.5 leading-relaxed">
                         {entry.content}
                       </p>
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-slate-500">
                           {dayjs(entry.updated_at).format("h:mm A")}
                         </span>
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedDate(entry.date);
-                              setIsEditMode(true);
-                              // Scroll to the main editing area
-                              setTimeout(() => {
-                                const mainArea = document.querySelector('[data-main-editor]');
-                                if (mainArea) {
-                                  mainArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                }
-                              }, 100);
-                            }}
-                            className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
-                          >
-                            Edit
-                          </button>
-                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedDate(entry.date);
+                            setIsEditMode(true);
+                            setTimeout(() => {
+                              const mainArea = document.querySelector('[data-main-editor]');
+                              if (mainArea) {
+                                mainArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                              }
+                            }, 100);
+                          }}
+                          className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+                        >
+                          Edit
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -1039,22 +1048,22 @@ export default function JournalPage() {
             </div>
 
             {/* Stats */}
-            <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 shadow-xl p-6">
-              <h3 className="text-lg font-semibold text-white mb-6">Your Progress</h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-gray-800/30 rounded-xl">
-                  <span className="text-gray-300">Total Entries</span>
-                  <span className="text-2xl font-bold text-purple-400">{entries.length}</span>
+            <div className="bg-slate-900/50 backdrop-blur-xl rounded-xl border border-slate-800/50 shadow-xl p-5">
+              <h3 className="text-base font-semibold text-white mb-4">Your Progress</h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-slate-800/30 rounded-lg border border-slate-700/50">
+                  <span className="text-sm text-slate-300">Total Entries</span>
+                  <span className="text-xl font-bold text-indigo-400">{entries.length}</span>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-gray-800/30 rounded-xl">
-                  <span className="text-gray-300">This Month</span>
-                  <span className="text-xl font-semibold text-white">
+                <div className="flex items-center justify-between p-3 bg-slate-800/30 rounded-lg border border-slate-700/50">
+                  <span className="text-sm text-slate-300">This Month</span>
+                  <span className="text-lg font-semibold text-white">
                     {entries.filter(e => dayjs(e.date).isSame(dayjs(), 'month')).length}
                   </span>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-gray-800/30 rounded-xl">
-                  <span className="text-gray-300">This Week</span>
-                  <span className="text-xl font-semibold text-white">
+                <div className="flex items-center justify-between p-3 bg-slate-800/30 rounded-lg border border-slate-700/50">
+                  <span className="text-sm text-slate-300">This Week</span>
+                  <span className="text-lg font-semibold text-white">
                     {entries.filter(e => dayjs(e.date).isSame(dayjs(), 'week')).length}
                   </span>
                 </div>
@@ -1065,13 +1074,13 @@ export default function JournalPage() {
 
         {/* Image Preview Modal */}
         {showImagePreview && currentImageUrl && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="relative max-w-4xl max-h-[90vh] bg-gray-900 rounded-2xl overflow-hidden">
+          <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={() => setShowImagePreview(false)}>
+            <div className="relative max-w-5xl max-h-[90vh] bg-slate-900 rounded-xl overflow-hidden border border-slate-800" onClick={(e) => e.stopPropagation()}>
               <button
                 onClick={() => setShowImagePreview(false)}
-                className="absolute top-4 right-4 z-10 p-2 bg-black/50 rounded-full text-white hover:bg-black/70 transition-colors"
+                className="absolute top-4 right-4 z-10 p-2 bg-black/60 hover:bg-black/80 rounded-lg text-white transition-colors backdrop-blur-sm"
               >
-                <X size={24} />
+                <X size={20} />
               </button>
               <NextImage
                 src={currentImageUrl}
@@ -1086,48 +1095,45 @@ export default function JournalPage() {
 
         {/* Read-Only Entry Modal */}
         {showReadOnlyModal && selectedReadOnlyEntry && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
-            <div className="bg-gradient-to-br from-slate-800/95 via-slate-800/90 to-slate-800/95 backdrop-blur-xl rounded-2xl border border-slate-700/50 shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+          <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={closeReadOnlyModal}>
+            <div className="bg-slate-900/95 backdrop-blur-xl rounded-xl border border-slate-800 shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
               {/* Modal Header */}
-              <div className="p-6 border-b border-slate-700/50 bg-gradient-to-r from-indigo-600/10 via-blue-600/10 to-cyan-600/10">
+              <div className="px-6 py-4 border-b border-slate-800">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 via-blue-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-indigo-500/50">
-                      <BookOpen className="w-6 h-6 text-white" />
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center">
+                      <BookOpen className="w-5 h-5 text-indigo-400" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-white">
-                        {dayjs(selectedReadOnlyEntry.date).format("dddd, MMMM D, YYYY")}
+                      <h3 className="text-lg font-semibold text-white">
+                        {dayjs(selectedReadOnlyEntry.date).format("MMMM D, YYYY")}
                       </h3>
-                      <p className="text-slate-400 text-sm mt-1">
-                        Updated at {new Date(selectedReadOnlyEntry.updated_at).toLocaleTimeString(navigator.language || undefined, {
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
+                      <p className="text-slate-500 text-xs mt-0.5">
+                        Updated {dayjs(selectedReadOnlyEntry.updated_at).fromNow()}
                       </p>
                     </div>
                   </div>
                   <button
                     onClick={closeReadOnlyModal}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-700/50 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors border border-slate-600/50"
+                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800/50 hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
                   >
-                    <X size={20} />
+                    <X size={18} />
                   </button>
                 </div>
               </div>
 
               {/* Modal Content */}
-              <div className="flex-1 overflow-y-auto p-6">
+              <div className="flex-1 overflow-y-auto px-6 py-6">
                 {selectedReadOnlyEntry.image_url && (
                   <div className="mb-6">
-                    <div className="relative w-full rounded-2xl overflow-hidden bg-slate-800/50 border border-slate-700/50 p-4">
-                      <div className="relative w-full min-h-64 max-h-[500px] rounded-xl overflow-hidden bg-slate-900/50 flex items-center justify-center">
+                    <div className="relative w-full rounded-xl overflow-hidden bg-slate-800/50 border border-slate-700/50">
+                      <div className="relative w-full min-h-48 max-h-96 rounded-xl overflow-hidden bg-slate-900/50 flex items-center justify-center">
                         <NextImage
                           src={selectedReadOnlyEntry.image_url}
                           alt={selectedReadOnlyEntry.image_alt || "Journal image"}
                           width={800}
                           height={600}
-                          className="w-full h-auto max-h-[500px] object-contain rounded-xl"
+                          className="w-full h-auto max-h-96 object-contain rounded-xl"
                           unoptimized
                         />
                       </div>
@@ -1135,29 +1141,29 @@ export default function JournalPage() {
                   </div>
                 )}
                 
-                <div className="bg-slate-800/30 rounded-xl border border-slate-700/50 p-6">
-                  <div className="text-white text-base sm:text-lg leading-relaxed whitespace-pre-wrap">
+                <div className="bg-slate-800/30 rounded-xl border border-slate-800/50 p-6">
+                  <div className="text-white text-base leading-relaxed whitespace-pre-wrap font-light">
                     {selectedReadOnlyEntry.content || <span className="text-slate-400 italic">No content</span>}
                   </div>
                 </div>
               </div>
 
               {/* Modal Footer */}
-              <div className="p-6 border-t border-slate-700/50 bg-slate-800/30">
+              <div className="px-6 py-4 border-t border-slate-800 bg-slate-900/50">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div className="flex items-center gap-3 text-sm text-slate-400">
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-700/50 rounded-lg border border-slate-600/50">
-                      <span className="text-slate-300 font-medium">{selectedReadOnlyEntry.content.length}</span>
-                      <span className="text-slate-500">characters</span>
-                    </div>
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <span>{selectedReadOnlyEntry.content.length} characters</span>
                     {selectedReadOnlyEntry.image_url && (
-                      <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-500/20 rounded-lg border border-indigo-500/30">
-                        <ImageIcon className="w-4 h-4 text-indigo-400" />
-                        <span className="text-indigo-400 font-medium">With image</span>
-                      </div>
+                      <>
+                        <span className="text-slate-700">•</span>
+                        <div className="flex items-center gap-1.5">
+                          <ImageIcon className="w-3.5 h-3.5 text-indigo-400" />
+                          <span className="text-indigo-400">With image</span>
+                        </div>
+                      </>
                     )}
                   </div>
-                  <div className="flex items-center gap-3 w-full sm:w-auto">
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
                     <button
                       onClick={async () => {
                         const confirmed = await new Promise((resolve) => {
@@ -1201,9 +1207,9 @@ export default function JournalPage() {
                           closeReadOnlyModal();
                         }
                       }}
-                      className="flex-1 sm:flex-none px-4 py-2.5 bg-red-500/20 text-red-400 rounded-xl hover:bg-red-500/30 transition-colors flex items-center justify-center gap-2 border border-red-500/30 font-medium"
+                      className="flex-1 sm:flex-none px-4 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors flex items-center justify-center gap-2 border border-red-500/30 text-sm font-medium"
                     >
-                      <Trash2 size={18} />
+                      <Trash2 size={16} />
                       <span>Delete</span>
                     </button>
                     <button
@@ -1211,7 +1217,6 @@ export default function JournalPage() {
                         setSelectedDate(selectedReadOnlyEntry.date);
                         setIsEditMode(true);
                         closeReadOnlyModal();
-                        // Scroll to the main editing area
                         setTimeout(() => {
                           const mainArea = document.querySelector('[data-main-editor]');
                           if (mainArea) {
@@ -1219,9 +1224,9 @@ export default function JournalPage() {
                           }
                         }, 100);
                       }}
-                      className="flex-1 sm:flex-none px-4 py-2.5 bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 hover:from-indigo-500 hover:via-blue-500 hover:to-cyan-500 text-white rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/30 font-medium"
+                      className="flex-1 sm:flex-none px-4 py-2 bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-400 hover:to-blue-400 text-white rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20 text-sm font-medium"
                     >
-                      <Edit3 size={18} />
+                      <Edit3 size={16} />
                       <span>Edit</span>
                     </button>
                   </div>
