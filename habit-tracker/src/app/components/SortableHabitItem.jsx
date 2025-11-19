@@ -8,6 +8,7 @@ import {
   Bars2Icon,
   TrashIcon,
   EnvelopeIcon,
+  PencilIcon,
 } from "@heroicons/react/24/outline";
 
 export default function SortableHabitItem({
@@ -16,6 +17,7 @@ export default function SortableHabitItem({
   onToggle,
   onDelete,
   onOpenNote,
+  onEdit,
 }) {
   const {
     attributes,
@@ -64,6 +66,13 @@ export default function SortableHabitItem({
 
       <div className="flex items-center gap-4">
         <InformationCircleIcon className="h-5 w-5 text-gray-400" />
+        <PencilIcon
+          className="h-5 w-5 text-indigo-400 cursor-pointer hover:text-indigo-300 transition-colors"
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit?.(habit);
+          }}
+        />
         <input
           type="checkbox"
           checked={!!checked}

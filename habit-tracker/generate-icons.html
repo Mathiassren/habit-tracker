@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Generate Rytmo Icons</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #1a1a1a;
+      color: white;
+    }
+    .icon-container {
+      margin: 30px 0;
+      text-align: center;
+    }
+    canvas {
+      border: 2px solid #333;
+      border-radius: 8px;
+      background: white;
+      margin: 10px;
+    }
+    button {
+      background: linear-gradient(to right, #818cf8, #60a5fa, #22d3ee);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 5px;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+    h1 {
+      background: linear-gradient(to right, #818cf8, #60a5fa, #22d3ee);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎨 Rytmo Icon Generator</h1>
+  <p>Click the buttons below to download the icons, or right-click each canvas and "Save image as".</p>
+  
+  <div class="icon-container">
+    <h2>192x192 Icon</h2>
+    <canvas id="icon192" width="192" height="192"></canvas>
+    <br>
+    <button onclick="downloadIcon('icon192', 'icon-192.png')">Download 192x192</button>
+  </div>
+  
+  <div class="icon-container">
+    <h2>512x512 Icon</h2>
+    <canvas id="icon512" width="512" height="512"></canvas>
+    <br>
+    <button onclick="downloadIcon('icon512', 'icon-512.png')">Download 512x512</button>
+  </div>
+
+  <script>
+    function drawIcon(canvas, size) {
+      const ctx = canvas.getContext('2d');
+      
+      // Create gradient
+      const gradient = ctx.createLinearGradient(0, 0, size, size);
+      gradient.addColorStop(0, '#818cf8'); // indigo-400
+      gradient.addColorStop(0.5, '#60a5fa'); // blue-400
+      gradient.addColorStop(1, '#22d3ee'); // cyan-400
+      
+      // Draw background circle
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(size / 2, size / 2, size * 0.47, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Draw "R" letter
+      ctx.fillStyle = 'white';
+      ctx.font = `bold ${size * 0.625}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('R', size / 2, size / 2);
+    }
+    
+    function downloadIcon(canvasId, filename) {
+      const canvas = document.getElementById(canvasId);
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+    
+    drawIcon(document.getElementById('icon192'), 192);
+    drawIcon(document.getElementById('icon512'), 512);
+  </script>
+</body>
+</html>
+

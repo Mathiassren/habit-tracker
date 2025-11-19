@@ -10,7 +10,8 @@
     "cap:add": "npx cap add",
     "cap:sync": "npx cap sync",
     "cap:open": "npx cap open",
-    "cap:android": "npx cap open android"
+    "cap:android": "npx cap open android",
+    "generate-icons": "node scripts/generate-icons.js"
   },
   "dependencies": {
     "@capacitor/android": "^7.4.4",
@@ -59,6 +60,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "canvas": "^3.2.0",
     "eslint": "^9",
     "eslint-config-next": "15.1.6",
     "postcss": "^8",

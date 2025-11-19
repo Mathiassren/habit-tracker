@@ -9,6 +9,7 @@ import {
   CalendarIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  PencilIcon,
 } from "@heroicons/react/24/outline";
 
 import {
@@ -317,6 +318,62 @@ function NoteModal({ open, habit, note, onChange, onClose, onSave }) {
   );
 }
 
+function EditHabitModal({ open, habit, name, onChange, onClose, onSave }) {
+  if (!open || !habit) return null;
+  return (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+      <div className="bg-gradient-to-br from-slate-800/95 via-slate-800/90 to-slate-800/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 w-full max-w-md overflow-hidden">
+        <div className="p-6 border-b border-slate-700/50 bg-gradient-to-r from-indigo-600/10 via-blue-600/10 to-cyan-600/10">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-blue-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-indigo-500/50">
+              <PencilIcon className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h4 className="text-xl font-bold text-white">Edit Habit Name</h4>
+              <p className="text-slate-400 text-sm">Change the name of your habit</p>
+            </div>
+          </div>
+        </div>
+        <div className="p-6">
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder="Enter habit name"
+            className="w-full px-4 py-3 mb-4 rounded-xl bg-slate-700/30 text-white border border-slate-600/30 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && name.trim()) {
+                onSave();
+              }
+            }}
+            autoFocus
+          />
+          {!name.trim() && (
+            <p className="text-red-400 text-sm mb-4 text-center">
+              Please enter a name for the habit.
+            </p>
+          )}
+          <div className="flex justify-end gap-3">
+            <button
+              className="px-4 py-2 rounded-xl bg-slate-700/50 hover:bg-slate-700 text-white transition-colors border border-slate-600/50"
+              onClick={onClose}
+            >
+              Cancel
+            </button>
+            <button
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 hover:from-indigo-500 hover:via-blue-500 hover:to-cyan-500 text-white shadow-lg shadow-indigo-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={onSave}
+              disabled={!name.trim()}
+            >
+              Save Changes
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* --------------------------------- Main ---------------------------------- */
 
 export default function DailylogPage() {
@@ -332,6 +389,10 @@ export default function DailylogPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [habitToDelete, setHabitToDelete] = useState(null);
+
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [habitToEdit, setHabitToEdit] = useState(null);
+  const [editHabitName, setEditHabitName] = useState("");
 
   const dateStr = useMemo(
     () => selectedDate.format("YYYY-MM-DD"),
@@ -527,6 +588,32 @@ export default function DailylogPage() {
     );
     setShowNoteModal(false);
   }, [selectedHabit, noteInput]);
+
+  const updateHabitName = useCallback(async () => {
+    if (!habitToEdit || !editHabitName.trim()) return;
+    const user = await getUser();
+    if (!user) return;
+    
+    const { error } = await supabase
+      .from("habits")
+      .update({ name: editHabitName.trim() })
+      .eq("user_id", user.id)
+      .eq("id", habitToEdit.id);
+    
+    if (error) {
+      console.error("updateHabitName:", error);
+      return;
+    }
+
+    setHabits((prev) =>
+      prev.map((h) =>
+        h.id === habitToEdit.id ? { ...h, name: editHabitName.trim() } : h
+      )
+    );
+    setShowEditModal(false);
+    setHabitToEdit(null);
+    setEditHabitName("");
+  }, [habitToEdit, editHabitName]);
 
   /* -------------------------- Toggle & DnD persistence --------------------- */
 
@@ -743,6 +830,11 @@ export default function DailylogPage() {
                     setNoteInput(h.note || "");
                     setShowNoteModal(true);
                   }}
+                  onEdit={(h) => {
+                    setHabitToEdit(h);
+                    setEditHabitName(h.name);
+                    setShowEditModal(true);
+                  }}
                 />
               ))}
             </SortableContext>
@@ -771,6 +863,18 @@ export default function DailylogPage() {
         onChange={setNoteInput}
         onClose={() => setShowNoteModal(false)}
         onSave={saveNote}
+      />
+      <EditHabitModal
+        open={showEditModal}
+        habit={habitToEdit}
+        name={editHabitName}
+        onChange={setEditHabitName}
+        onClose={() => {
+          setShowEditModal(false);
+          setHabitToEdit(null);
+          setEditHabitName("");
+        }}
+        onSave={updateHabitName}
       />
     </div>
   );
