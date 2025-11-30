@@ -11,7 +11,9 @@ export default function Nav() {
   const { user, loginWithGoogle, logout } = useAuth();
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
   const menuRef = useRef(null);
+  const lastScrollY = useRef(0);
 
   const toggleMenu = () => setIsOpen(!isOpen);
   const closeMenu = () => setIsOpen(false);
@@ -42,8 +44,78 @@ export default function Nav() {
     };
   }, [isOpen]);
 
+  // Handle scroll direction for mobile nav visibility (mobile only)
+  useEffect(() => {
+    let ticking = false;
+
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          // Only apply scroll behavior on mobile
+          if (window.innerWidth >= 768) {
+            setIsVisible(true);
+            ticking = false;
+            return;
+          }
+
+          const currentScrollY = window.scrollY;
+          const scrollDifference = Math.abs(currentScrollY - lastScrollY.current);
+          
+          // Only update if scroll difference is significant (avoid jitter)
+          if (scrollDifference > 5) {
+            if (currentScrollY < 10) {
+              // Always show at top
+              setIsVisible(true);
+            } else if (currentScrollY > lastScrollY.current) {
+              // Scrolling down - hide nav
+              setIsVisible(false);
+            } else {
+              // Scrolling up - show nav
+              setIsVisible(true);
+            }
+            
+            lastScrollY.current = currentScrollY;
+          }
+          
+          ticking = false;
+        });
+        
+        ticking = true;
+      }
+    };
+
+    const handleResize = () => {
+      // Reset visibility on resize - always visible on desktop
+      if (window.innerWidth >= 768) {
+        setIsVisible(true);
+      } else {
+        // On mobile, show nav initially
+        setIsVisible(true);
+      }
+    };
+
+    // Set initial scroll position
+    lastScrollY.current = window.scrollY;
+    
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', handleResize);
+    
+    // Initialize based on current width
+    handleResize();
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
   return (
-    <nav className="bg-gradient-to-r from-slate-900/95 via-slate-800/95 to-slate-900/95 backdrop-blur-xl border-b border-slate-700/50 shadow-2xl relative z-[9999] w-full safe-area-nav" style={{ position: 'relative', zIndex: 9999 }}>
+    <nav 
+      className={`bg-gradient-to-r from-slate-900/95 via-slate-800/95 to-slate-900/95 backdrop-blur-xl border-b border-slate-700/50 shadow-2xl fixed md:relative top-0 left-0 right-0 z-[9999] w-full safe-area-nav transition-transform duration-300 ease-in-out ${
+        isVisible ? 'translate-y-0' : '-translate-y-full'
+      } md:translate-y-0`}
+      style={{ zIndex: 9999 }}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-2 pb-3 sm:pt-3 sm:pb-4">
         <div className="flex justify-between items-center">
           {/* Logo */}

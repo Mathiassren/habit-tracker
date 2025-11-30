@@ -58,7 +58,9 @@ export default function ClientRoot({ children, user }) {
       <div suppressHydrationWarning style={{ position: 'relative', zIndex: 9999 }}>
         {mounted ? <Nav /> : <nav className="p-4" />}
       </div>
-      {children}
+      <div className="pt-16 md:pt-0">
+        {children}
+      </div>
       <Toaster
         position="top-center"
         toastOptions={{
